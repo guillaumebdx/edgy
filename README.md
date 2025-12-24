@@ -1,24 +1,23 @@
-# 🎮 Edgy Grid
+# Edgy Grid
 
 Un jeu de puzzle mobile développé avec **React Native** et **Expo**.
 
-Vibe codé et entièrement inventé par Guillaume HARARI
+Vibe codé et entièrement inventé par **Guillaume HARARI**
 
-Tracez des chemins sur une grille colorée, fusionnez les cases et déclenchez des réactions en chaîne pour maximiser votre score !
-
----
-
-## 📱 Aperçu
-
-- Grille **6×6** avec des cases numérotées de 1 à 5
-- Tracez des chemins en glissant le doigt sur des cases adjacentes de même valeur
-- Les cases fusionnent et prennent la valeur de la longueur du chemin
-- Dépassez la valeur maximale (5) pour déclencher une **destruction** avec gravité
-- Système de **score** et **combo** pour récompenser les chaînes
+Tracez des chemins sur une grille de circuit logique, fusionnez les modules et déclenchez des réactions en chaîne pour maximiser votre score.
 
 ---
 
-## 🚀 Installation
+## Aperçu
+
+- Grille **6×6** avec des modules numérotés de 1 à 5
+- Thème visuel **Circuit / Logique** — les cases ressemblent à des composants électroniques
+- Système de **stock limité** (50 cellules) — la partie se termine quand plus aucun coup n'est possible
+- **Combos** et **célébrations** pour les performances exceptionnelles
+
+---
+
+## Installation
 
 ```bash
 # Cloner le repo
@@ -29,7 +28,7 @@ cd edgy-grid
 npm install
 
 # Lancer l'application
-npm start
+npx expo start
 ```
 
 Scannez le QR code avec **Expo Go** sur votre téléphone, ou :
@@ -39,7 +38,7 @@ Scannez le QR code avec **Expo Go** sur votre téléphone, ou :
 
 ---
 
-## 🎯 Règles du jeu
+## Règles du jeu
 
 ### Tracé de chemin
 1. **Posez** le doigt sur une case pour démarrer
@@ -54,34 +53,44 @@ Scannez le QR code avec **Expo Go** sur votre téléphone, ou :
 - Les cases du chemin prennent la **nouvelle valeur = longueur du chemin**
 - Si la nouvelle valeur **> 5** (MAX) → les cases sont **détruites**
 
-### Gravité
+### Gravité & Stock
 - Après destruction, les cases au-dessus **tombent**
-- De nouvelles cases apparaissent en haut
+- De nouvelles cases apparaissent depuis le **stock** (50 au départ)
+- Quand le stock est vide et qu'aucun coup n'est possible → **Game Over**
 
 ### Score & Combo
-- **Points** = valeur² × nombre de cases
-- **Combo** : multiplicateur qui augmente à chaque destruction consécutive
-- Le combo retombe à 0 si aucune destruction n'a lieu
+- **Points** = longueur² × nombre de cases × multiplicateur combo
+- **Combo** : augmente à chaque destruction consécutive
+- **Célébrations** : mots valorisants pour les longues chaînes (8+), combos (x3+), ou grosses destructions (6+ cases)
 
 ---
 
-## 🎨 Design
+## Direction artistique
 
-| Valeur | Couleur |
-|--------|---------|
-| 1 | 🔴 Rouge `#E63946` |
-| 2 | 🟠 Orange `#F77F00` |
-| 3 | 🟢 Vert `#06D6A0` |
-| 4 | 🔵 Bleu `#118AB2` |
-| 5 | 🟣 Violet `#9D4EDD` |
+### Thème Circuit / Logique
+- Fond avec motif de circuit imprimé discret
+- Cases = modules électroniques posés sur un PCB
+- Palette fonctionnelle par niveau de charge
 
-- Fond sombre `#1a1a1a`
-- Animations fluides (gravité avec rebond, shake avant destruction)
-- Feedback haptique sur validation et explosion
+### Palette de couleurs
+
+| Valeur | État | Couleur |
+|--------|------|---------|
+| 1 | Dim | `#2D4048` |
+| 2 | Neutre | `#386068` |
+| 3 | Actif | `#408888` |
+| 4 | Chargé | `#48A090` |
+| 5 | Haute charge | `#70D0B0` |
+
+### Animations
+- **Sélection** : scale rapide avec léger rebond
+- **Destruction** : heartbeat puis disparition
+- **Gravité** : chute avec rebond physique
+- **Feedback haptique** sur validation et explosion
 
 ---
 
-## 🛠️ Technologies
+## Technologies
 
 - **React Native** + **Expo**
 - **react-native-gesture-handler** — Gestion des gestes tactiles
@@ -90,17 +99,39 @@ Scannez le QR code avec **Expo Go** sur votre téléphone, ou :
 
 ---
 
-## 📁 Structure
+## Architecture
 
 ```
 edgy-grid/
-├── App.js          # Logique principale du jeu
-├── package.json    # Dépendances
-└── README.md       # Ce fichier 
+├── App.js                      # Point d'entrée, UI principale
+├── assets/
+│   └── background-circuit.png  # Fond circuit
+└── src/
+    ├── constants.js            # Configuration (grille, couleurs, seuils)
+    ├── gameLogic.js            # Logique de jeu (grille, validation, gravité)
+    ├── scoreManager.js         # Calcul du score, combos, célébrations
+    ├── styles.js               # Styles globaux
+    ├── utils.js                # Fonctions utilitaires
+    ├── components/
+    │   ├── AnimatedCell.js     # Cellule animée
+    │   ├── CelebrationText.js  # Texte de célébration
+    │   ├── FloatingText.js     # Score flottant
+    │   ├── GameOverScreen.js   # Écran de fin
+    │   └── index.js            # Exports
+    └── hooks/
+        ├── useGameState.js     # État centralisé du jeu
+        └── index.js            # Exports
 ```
+
+### Séparation des responsabilités
+- **constants.js** : configuration centralisée
+- **gameLogic.js** : règles du jeu, aucune dépendance React
+- **scoreManager.js** : calculs de score isolés
+- **useGameState.js** : état React centralisé
+- **components/** : UI pure avec animations
 
 ---
 
-## 📄 Licence
+## Licence
 
 MIT
