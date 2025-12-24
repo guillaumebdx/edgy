@@ -31,6 +31,9 @@
         "projectId": "6c82e544-9766-4c25-8a21-2abd8e9c0b27"
       }
     },
-    "owner": "guillaumebdx"
+    "owner": "guillaumebdx",
+    "plugins": [
+      "expo-sqlite"
+    ]
   }
 }

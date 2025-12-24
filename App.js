@@ -9,13 +9,14 @@
  * - src/gameLogic.js: Grid management, validation, gravity
  * - src/scoreManager.js: Score calculation, combos, celebrations
  * - src/careerLevels.js: Level definitions for career mode
+ * - src/persistence/: SQLite storage for career progress
  * - src/components/: UI components (AnimatedCell, FloatingText, etc.)
  * - src/hooks/: useGameState, useCareerState
  */
 
 import { useState, useCallback, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Text, View, ImageBackground } from 'react-native';
+import { Text, View, ImageBackground, TouchableOpacity } from 'react-native';
 import { GestureHandlerRootView, GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 
@@ -29,22 +30,36 @@ import {
   CelebrationText,
   GameOverScreen,
   LevelInfo,
+  MainMenu,
 } from './src/components';
 import { useGameState, useCareerState } from './src/hooks';
+
+// App screens
+const SCREENS = {
+  MENU: 'menu',
+  GAME: 'game',
+};
 
 /**
  * Main App Component
  * Renders the game UI and handles gesture input
- * Manages career mode progression
+ * Manages career mode progression and navigation
  */
 export default function App() {
+  // Current screen state
+  const [currentScreen, setCurrentScreen] = useState(SCREENS.MENU);
+
   // Career state management
   const {
     currentLevelNumber,
     currentLevel,
     totalLevels,
+    isLoading,
+    hasSavedGame,
     processRunEnd,
+    advanceToNextLevel,
     resetCareer,
+    continueCareer,
   } = useCareerState();
 
   // Level result state for game over screen
@@ -73,6 +88,35 @@ export default function App() {
     handleGestureEnd,
     restartGame,
   } = useGameState(currentLevel);
+
+  /**
+   * Handle "Continue" from main menu
+   */
+  const handleContinue = useCallback(() => {
+    continueCareer();
+    setLevelResult(null);
+    setCurrentScreen(SCREENS.GAME);
+  }, [continueCareer]);
+
+  /**
+   * Handle "New Game" from main menu
+   * resetCareer changes currentLevelNumber to 1, which triggers
+   * useGameState to auto-reset via levelId change detection
+   */
+  const handleNewGame = useCallback(async () => {
+    await resetCareer();
+    setLevelResult(null);
+    setCurrentScreen(SCREENS.GAME);
+  }, [resetCareer]);
+
+  /**
+   * Handle "Back to Menu" from game
+   * Does not save progress - only saves on level completion
+   */
+  const handleBackToMenu = useCallback(() => {
+    setLevelResult(null);
+    setCurrentScreen(SCREENS.MENU);
+  }, []);
 
   /**
    * Handle game over - process level completion
@@ -105,19 +149,20 @@ export default function App() {
 
   /**
    * Proceed to next level (after success)
+   * Calls advanceToNextLevel which changes currentLevelNumber,
+   * triggering useGameState auto-reset via levelId change
    */
-  const handleNextLevel = useCallback(() => {
+  const handleNextLevel = useCallback(async () => {
     setLevelResult(null);
-    // restartGame will use the new level config from useCareerState
-    restartGame();
-  }, [restartGame]);
+    await advanceToNextLevel();
+  }, [advanceToNextLevel]);
 
   // Process level completion when game ends
   useEffect(() => {
-    if (gameOver && !levelResult) {
+    if (gameOver && !levelResult && currentScreen === SCREENS.GAME) {
       handleGameOver();
     }
-  }, [gameOver, levelResult, handleGameOver]);
+  }, [gameOver, levelResult, handleGameOver, currentScreen]);
 
   // Configure pan gesture for path drawing
   const panGesture = Gesture.Pan()
@@ -135,6 +180,23 @@ export default function App() {
     })
     .minDistance(0);
 
+  // Show Main Menu
+  if (currentScreen === SCREENS.MENU) {
+    return (
+      <GestureHandlerRootView style={styles.container}>
+        <StatusBar style="light" />
+        <MainMenu
+          onContinue={handleContinue}
+          onNewGame={handleNewGame}
+          hasSavedGame={hasSavedGame}
+          isLoading={isLoading}
+          savedLevelNumber={currentLevelNumber}
+        />
+      </GestureHandlerRootView>
+    );
+  }
+
+  // Show Game Screen
   return (
     <GestureHandlerRootView style={styles.container}>
       <ImageBackground
@@ -144,6 +206,11 @@ export default function App() {
         imageStyle={styles.backgroundImageStyle}
       >
         <StatusBar style="light" />
+
+      {/* Back to Menu button */}
+      <TouchableOpacity style={styles.menuButton} onPress={handleBackToMenu}>
+        <Text style={styles.menuButtonText}>← Menu</Text>
+      </TouchableOpacity>
 
       {/* Level info display */}
       {currentLevel && (

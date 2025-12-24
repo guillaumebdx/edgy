@@ -88,12 +88,39 @@ const useGameState = (levelConfig = null) => {
   const gridSizeRef = useRef(gridSize);
   const maxValueRef = useRef(maxValue);
   
+  // Track level ID to detect level changes
+  const levelId = levelConfig?.id || 0;
+  const prevLevelIdRef = useRef(levelId);
+  
   // Update refs when level changes
   useEffect(() => {
     gridSizeRef.current = gridSize;
     maxValueRef.current = maxValue;
     targetScoreRef.current = targetScore;
   }, [gridSize, maxValue, targetScore]);
+  
+  // Reset game state when level changes (different level ID)
+  useEffect(() => {
+    if (prevLevelIdRef.current !== levelId) {
+      prevLevelIdRef.current = levelId;
+      
+      // Reset all game state for new level
+      setGridData(generateGrid(gridSize, maxValue));
+      setScore(0);
+      setCombo(0);
+      stockRef.current = initialStock;
+      setStock(initialStock);
+      setGameOver(false);
+      setLevelComplete(false);
+      setPath([]);
+      pathRef.current = [];
+      pathValueRef.current = null;
+      isResolvingRef.current = false;
+      setExceededCells([]);
+      setShakingCells([]);
+      setFallingCells({});
+    }
+  }, [levelId, gridSize, maxValue, initialStock]);
 
   /**
    * Handles grid layout measurement for touch coordinate conversion

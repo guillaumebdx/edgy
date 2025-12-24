@@ -78,6 +78,19 @@ const styles = StyleSheet.create({
     bottom: 6,
     pointerEvents: 'none',
   },
+  menuButton: {
+    position: 'absolute',
+    top: 50,
+    left: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    zIndex: 10,
+  },
+  menuButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.5)',
+  },
 });
 
 export default styles;
