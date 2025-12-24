@@ -1,22 +1,64 @@
 /**
  * GameOverScreen Component
  * Overlay displayed when the game ends (no valid moves remaining)
+ * Shows level completion status in career mode
  */
 
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { formatScore } from '../scoreManager';
 
-const GameOverScreen = ({ score, onRestart }) => {
+const GameOverScreen = ({ 
+  score, 
+  onRestart, 
+  levelResult = null,
+  onNextLevel = null,
+}) => {
+  const isLevelComplete = levelResult?.success;
+  const isCareerComplete = levelResult?.careerCompleted;
+  
   return (
     <View style={styles.overlay}>
       <View style={styles.container}>
-        <Text style={styles.title}>Partie terminée</Text>
+        {/* Level result message */}
+        {levelResult && (
+          <Text style={[
+            styles.resultMessage,
+            isLevelComplete ? styles.successMessage : styles.failMessage
+          ]}>
+            {levelResult.message}
+          </Text>
+        )}
+        
+        <Text style={styles.title}>
+          {isCareerComplete ? 'Carrière terminée !' : 'Partie terminée'}
+        </Text>
         <Text style={styles.score}>{formatScore(score)}</Text>
         <Text style={styles.label}>points</Text>
-        <TouchableOpacity style={styles.button} onPress={onRestart}>
-          <Text style={styles.buttonText}>Rejouer</Text>
-        </TouchableOpacity>
+        
+        {/* Target score reminder if failed */}
+        {levelResult && !isLevelComplete && (
+          <Text style={styles.targetReminder}>
+            Objectif : {levelResult.targetScore?.toLocaleString() || '—'}
+          </Text>
+        )}
+        
+        {/* Action buttons */}
+        <View style={styles.buttonContainer}>
+          {isLevelComplete && !isCareerComplete && onNextLevel && (
+            <TouchableOpacity style={styles.button} onPress={onNextLevel}>
+              <Text style={styles.buttonText}>Niveau suivant</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity 
+            style={[styles.button, isLevelComplete && !isCareerComplete && styles.secondaryButton]} 
+            onPress={onRestart}
+          >
+            <Text style={[styles.buttonText, isLevelComplete && !isCareerComplete && styles.secondaryButtonText]}>
+              {isLevelComplete ? 'Rejouer' : 'Réessayer'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -37,6 +79,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 40,
   },
+  resultMessage: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 4,
+  },
+  successMessage: {
+    color: '#70D0B0',
+    backgroundColor: 'rgba(112, 208, 176, 0.15)',
+  },
+  failMessage: {
+    color: '#E08080',
+    backgroundColor: 'rgba(224, 128, 128, 0.15)',
+  },
   title: {
     fontSize: 24,
     fontWeight: '600',
@@ -51,9 +109,18 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     color: 'rgba(255, 255, 255, 0.4)',
-    marginBottom: 40,
+    marginBottom: 16,
     textTransform: 'uppercase',
     letterSpacing: 1,
+  },
+  targetReminder: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginBottom: 24,
+  },
+  buttonContainer: {
+    marginTop: 16,
+    gap: 12,
   },
   button: {
     backgroundColor: '#5AB88F',
@@ -66,12 +133,23 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 6,
   },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   buttonText: {
     fontSize: 15,
     fontWeight: '700',
     color: '#FFFFFF',
     textTransform: 'uppercase',
     letterSpacing: 1,
+    textAlign: 'center',
+  },
+  secondaryButtonText: {
+    color: 'rgba(255, 255, 255, 0.7)',
   },
 });
 

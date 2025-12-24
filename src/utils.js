@@ -12,11 +12,12 @@ import { getCellPosition } from './gameLogic';
  * @param {number} toIndex - Ending cell index
  * @param {number} cellWidth - Width of each cell
  * @param {number} cellHeight - Height of each cell
+ * @param {number} gridSize - Size of the grid (default from constants)
  * @returns {Object} Style object for the connection line
  */
-export const getConnectionStyle = (fromIndex, toIndex, cellWidth, cellHeight) => {
-  const from = getCellPosition(fromIndex);
-  const to = getCellPosition(toIndex);
+export const getConnectionStyle = (fromIndex, toIndex, cellWidth, cellHeight, gridSize = GRID_SIZE) => {
+  const from = getCellPosition(fromIndex, gridSize);
+  const to = getCellPosition(toIndex, gridSize);
 
   // Calculate center points of cells
   const fromX = (from.col + 0.5) * cellWidth;

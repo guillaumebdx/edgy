@@ -7,3 +7,4 @@ export { default as AnimatedCell } from './AnimatedCell';
 export { default as FloatingText } from './FloatingText';
 export { default as CelebrationText } from './CelebrationText';
 export { default as GameOverScreen } from './GameOverScreen';
+export { default as LevelInfo } from './LevelInfo';

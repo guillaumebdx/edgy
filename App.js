@@ -2,23 +2,25 @@
  * Edgy Grid - Main Application
  * 
  * A tactile puzzle game where players connect cells of the same value
- * to transform them. The game ends when no valid moves remain.
+ * to transform them. Career mode with 5 progressive levels.
  * 
  * Architecture:
  * - src/constants.js: Game configuration and constants
  * - src/gameLogic.js: Grid management, validation, gravity
  * - src/scoreManager.js: Score calculation, combos, celebrations
+ * - src/careerLevels.js: Level definitions for career mode
  * - src/components/: UI components (AnimatedCell, FloatingText, etc.)
- * - src/hooks/useGameState.js: Centralized state management
+ * - src/hooks/: useGameState, useCareerState
  */
 
+import { useState, useCallback, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, ImageBackground } from 'react-native';
 import { GestureHandlerRootView, GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 
 // Module imports
-import { GRID_SIZE, ANIMATION } from './src/constants';
+import { ANIMATION } from './src/constants';
 import { getConnectionStyle } from './src/utils';
 import styles from './src/styles';
 import {
@@ -26,15 +28,29 @@ import {
   FloatingText,
   CelebrationText,
   GameOverScreen,
+  LevelInfo,
 } from './src/components';
-import { useGameState } from './src/hooks';
+import { useGameState, useCareerState } from './src/hooks';
 
 /**
  * Main App Component
  * Renders the game UI and handles gesture input
+ * Manages career mode progression
  */
 export default function App() {
-  // Get all game state and handlers from custom hook
+  // Career state management
+  const {
+    currentLevelNumber,
+    currentLevel,
+    totalLevels,
+    processRunEnd,
+    resetCareer,
+  } = useCareerState();
+
+  // Level result state for game over screen
+  const [levelResult, setLevelResult] = useState(null);
+
+  // Get all game state and handlers from custom hook with level config
   const {
     gridData,
     exceededCells,
@@ -46,14 +62,62 @@ export default function App() {
     combo,
     stock,
     gameOver,
+    levelComplete,
     floatingScore,
     celebration,
+    gridSize,
+    maxValue,
     handleGridLayout,
     handleGestureBegin,
     handleGestureUpdate,
     handleGestureEnd,
     restartGame,
-  } = useGameState();
+  } = useGameState(currentLevel);
+
+  /**
+   * Handle game over - process level completion
+   * Uses levelComplete from useGameState (set when target score is reached)
+   */
+  const handleGameOver = useCallback(() => {
+    if (levelComplete) {
+      // Target score reached - process as success
+      const result = processRunEnd(score);
+      result.targetScore = currentLevel?.targetScore;
+      setLevelResult(result);
+    } else {
+      // Game over without reaching target - failure
+      setLevelResult({
+        success: false,
+        careerCompleted: false,
+        message: 'Score insuffisant',
+        targetScore: currentLevel?.targetScore,
+      });
+    }
+  }, [score, levelComplete, processRunEnd, currentLevel]);
+
+  /**
+   * Restart current level
+   */
+  const handleRestart = useCallback(() => {
+    setLevelResult(null);
+    restartGame();
+  }, [restartGame]);
+
+  /**
+   * Proceed to next level (after success)
+   */
+  const handleNextLevel = useCallback(() => {
+    setLevelResult(null);
+    // restartGame will use the new level config from useCareerState
+    restartGame();
+  }, [restartGame]);
+
+  // Process level completion when game ends
+  useEffect(() => {
+    if (gameOver && !levelResult) {
+      handleGameOver();
+    }
+  }, [gameOver, levelResult, handleGameOver]);
 
   // Configure pan gesture for path drawing
   const panGesture = Gesture.Pan()
@@ -80,6 +144,18 @@ export default function App() {
         imageStyle={styles.backgroundImageStyle}
       >
         <StatusBar style="light" />
+
+      {/* Level info display */}
+      {currentLevel && (
+        <LevelInfo
+          levelNumber={currentLevelNumber}
+          levelName={currentLevel.name}
+          targetScore={currentLevel.targetScore}
+          maxValue={maxValue}
+          stock={currentLevel.stock}
+          totalLevels={totalLevels}
+        />
+      )}
 
       {/* Header: Score and Stock display */}
       <View style={styles.headerContainer}>
@@ -112,7 +188,7 @@ export default function App() {
               const isExceeded = exceededCells.includes(index);
               const isShaking = shakingCells.includes(index);
               const fallDistance = fallingCells[index] || 0;
-              const col = index % GRID_SIZE;
+              const col = index % gridSize;
 
               return (
                 <AnimatedCell
@@ -127,6 +203,8 @@ export default function App() {
                   fallDistance={fallDistance}
                   columnDelay={col * ANIMATION.FALL_DELAY_PER_COLUMN}
                   cellHeight={gridLayout.cellHeight}
+                  gridSize={gridSize}
+                  maxValue={maxValue}
                 />
               );
             })}
@@ -141,7 +219,8 @@ export default function App() {
                       fromIndex,
                       path[i + 1],
                       gridLayout.cellWidth,
-                      gridLayout.cellHeight
+                      gridLayout.cellHeight,
+                      gridSize
                     )}
                   />
                 ))}
@@ -158,8 +237,15 @@ export default function App() {
         key={celebration.key}
       />
 
-      {/* Game over screen */}
-      {gameOver && <GameOverScreen score={score} onRestart={restartGame} />}
+      {/* Game over screen with level result */}
+      {gameOver && (
+        <GameOverScreen 
+          score={score} 
+          onRestart={handleRestart}
+          levelResult={levelResult || { success: false, message: 'Partie terminée' }}
+          onNextLevel={levelResult?.success && !levelResult?.careerCompleted ? handleNextLevel : null}
+        />
+      )}
       </ImageBackground>
     </GestureHandlerRootView>
   );

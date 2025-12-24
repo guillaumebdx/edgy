@@ -27,14 +27,19 @@ const AnimatedCell = ({
   fallDistance,
   columnDelay,
   cellHeight,
+  gridSize = GRID_SIZE,
+  maxValue = MAX_VALUE,
 }) => {
+  // Calculate cell size based on gridSize
+  const cellSizePercent = 100 / gridSize;
+  
   // Empty cell placeholder
   if (value === null) {
-    return <View style={styles.cell} />;
+    return <View style={[styles.cell, { width: `${cellSizePercent}%`, height: `${cellSizePercent}%` }]} />;
   }
 
-  // Get color data, clamping to MAX_VALUE for display
-  const displayValue = value > MAX_VALUE ? MAX_VALUE : value;
+  // Get color data, clamping to maxValue for display
+  const displayValue = value > maxValue ? maxValue : value;
   const colorData = COLOR_MAP[displayValue] || COLOR_MAP[1];
 
   // Animation shared values
@@ -97,8 +102,15 @@ const AnimatedCell = ({
     opacity: opacityAnim.value,
   }));
 
+  // Dynamic cell style
+  const cellStyle = {
+    width: `${cellSizePercent}%`,
+    height: `${cellSizePercent}%`,
+    padding: 2,
+  };
+
   return (
-    <Animated.View style={[styles.cell, animatedStyle]}>
+    <Animated.View style={[cellStyle, animatedStyle]}>
       {/* Module container with border */}
       <View
         style={[
