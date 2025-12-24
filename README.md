@@ -96,7 +96,7 @@ Scannez le QR code avec **Expo Go** sur votre téléphone, ou :
 edgy-grid/
 ├── App.js          # Logique principale du jeu
 ├── package.json    # Dépendances
-└── README.md       # Ce fichier
+└── README.md       # Ce fichier 
 ```
 
 ---
