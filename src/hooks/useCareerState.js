@@ -27,8 +27,11 @@ import {
  * @returns {Object} Career state and actions
  */
 const useCareerState = () => {
-  // Current level number (1-indexed)
-  const [currentLevelNumber, setCurrentLevelNumber] = useState(1);
+  // Career progress level - the actual progression (persisted in DB)
+  const [careerLevelNumber, setCareerLevelNumber] = useState(1);
+  
+  // Currently playing level - may differ when replaying previous levels
+  const [playingLevelNumber, setPlayingLevelNumber] = useState(1);
   
   // Highest unlocked level
   const [unlockedLevel, setUnlockedLevel] = useState(1);
@@ -52,7 +55,8 @@ const useCareerState = () => {
         const progress = await loadCareerProgress();
         
         if (progress) {
-          setCurrentLevelNumber(progress.currentLevel);
+          setCareerLevelNumber(progress.currentLevel);
+          setPlayingLevelNumber(progress.currentLevel);
           setUnlockedLevel(progress.unlockedLevel);
           setHasSavedGame(true);
           
@@ -72,12 +76,12 @@ const useCareerState = () => {
   }, []);
 
   /**
-   * Get current level configuration
-   * @returns {Object} Current level config
+   * Get playing level configuration (the level currently being played)
+   * @returns {Object} Playing level config
    */
-  const getCurrentLevel = useCallback(() => {
-    return getLevelConfig(currentLevelNumber);
-  }, [currentLevelNumber]);
+  const getPlayingLevel = useCallback(() => {
+    return getLevelConfig(playingLevelNumber);
+  }, [playingLevelNumber]);
 
   /**
    * Check if score meets level objective
@@ -85,56 +89,74 @@ const useCareerState = () => {
    * @returns {boolean} True if level is completed
    */
   const isLevelCompleted = useCallback((score) => {
-    const level = getCurrentLevel();
+    const level = getPlayingLevel();
     return level && score >= level.targetScore;
-  }, [getCurrentLevel]);
+  }, [getPlayingLevel]);
 
   /**
    * Process end of run and determine result
    * Does NOT advance level - just returns the result
    * Level advancement happens via advanceToNextLevel when user clicks "Next"
+   * Only advances career if playing level >= career level (not replaying old levels)
    * @param {number} finalScore - Score achieved in the run
    * @returns {Object} Result with success status
    */
   const processRunEnd = useCallback((finalScore) => {
-    const level = getCurrentLevel();
+    const level = getPlayingLevel();
     const success = isLevelCompleted(finalScore);
+    const isReplayingOldLevel = playingLevelNumber < careerLevelNumber;
     
     if (success) {
-      const nextLevelNumber = currentLevelNumber + 1;
+      if (isReplayingOldLevel) {
+        // Replaying old level - no career progression
+        return {
+          success: true,
+          careerCompleted: false,
+          nextLevel: null,
+          message: `Niveau ${playingLevelNumber} terminé !`,
+          completedLevel: playingLevelNumber,
+          isReplay: true,
+        };
+      }
+      
+      const nextLevelNumber = playingLevelNumber + 1;
       const hasNextLevel = levelExists(nextLevelNumber);
       
       return {
         success: true,
         careerCompleted: !hasNextLevel,
         nextLevel: hasNextLevel ? nextLevelNumber : null,
-        message: `Niveau ${currentLevelNumber} terminé !`,
-        completedLevel: currentLevelNumber,
+        message: `Niveau ${playingLevelNumber} terminé !`,
+        completedLevel: playingLevelNumber,
+        isReplay: false,
       };
     } else {
       // Retry same level
       return {
         success: false,
         careerCompleted: false,
-        nextLevel: currentLevelNumber,
+        nextLevel: playingLevelNumber,
         message: `Score insuffisant. Objectif : ${level.targetScore}`,
         completedLevel: null,
+        isReplay: isReplayingOldLevel,
       };
     }
-  }, [currentLevelNumber, getCurrentLevel, isLevelCompleted]);
+  }, [playingLevelNumber, careerLevelNumber, getPlayingLevel, isLevelCompleted]);
 
   /**
    * Advance to next level after user confirms
    * Called when user clicks "Next Level" button
    * Saves progress to SQLite
+   * Only called when completing current career level (not replays)
    */
   const advanceToNextLevel = useCallback(async () => {
-    const nextLevelNumber = currentLevelNumber + 1;
+    const nextLevelNumber = playingLevelNumber + 1;
     
     if (levelExists(nextLevelNumber)) {
       const newUnlockedLevel = Math.max(unlockedLevel, nextLevelNumber);
       
-      setCurrentLevelNumber(nextLevelNumber);
+      setCareerLevelNumber(nextLevelNumber);
+      setPlayingLevelNumber(nextLevelNumber);
       setUnlockedLevel(newUnlockedLevel);
       setHasSavedGame(true);
       
@@ -146,16 +168,17 @@ const useCareerState = () => {
       setHasSavedGame(true);
       
       // Save final state
-      await saveCareerProgress(currentLevelNumber, unlockedLevel);
+      await saveCareerProgress(playingLevelNumber, unlockedLevel);
     }
-  }, [currentLevelNumber, unlockedLevel]);
+  }, [playingLevelNumber, unlockedLevel]);
 
   /**
    * Reset career to level 1 (new game)
    * Clears SQLite storage
    */
   const resetCareer = useCallback(async () => {
-    setCurrentLevelNumber(1);
+    setCareerLevelNumber(1);
+    setPlayingLevelNumber(1);
     setUnlockedLevel(1);
     setCareerCompleted(false);
     setHasSavedGame(false);
@@ -169,23 +192,38 @@ const useCareerState = () => {
    * Called when user chooses "Continue" from menu
    */
   const continueCareer = useCallback(() => {
-    // State is already loaded from SQLite on mount
-    // This function exists for explicit intent from menu
+    // Reset playing level to career level
+    setPlayingLevelNumber(careerLevelNumber);
     return {
-      currentLevel: currentLevelNumber,
+      currentLevel: careerLevelNumber,
       unlockedLevel,
     };
-  }, [currentLevelNumber, unlockedLevel]);
+  }, [careerLevelNumber, unlockedLevel]);
+
+  /**
+   * Select a specific level to play (does NOT change career progress)
+   * Only allows selecting unlocked levels
+   * Only changes playingLevelNumber, not careerLevelNumber
+   * @param {number} levelNumber - Level to select
+   */
+  const selectLevel = useCallback((levelNumber) => {
+    if (levelNumber <= unlockedLevel && levelExists(levelNumber)) {
+      setPlayingLevelNumber(levelNumber);
+    }
+  }, [unlockedLevel]);
 
   return {
-    // State
-    currentLevelNumber,
-    currentLevel: getCurrentLevel(),
+    // State - career progress (persisted)
+    careerLevelNumber,
     unlockedLevel,
     careerCompleted,
     totalLevels: getTotalLevels(),
     isLoading,
     hasSavedGame,
+    
+    // State - currently playing (not persisted until level complete)
+    playingLevelNumber,
+    playingLevel: getPlayingLevel(),
     
     // Actions
     isLevelCompleted,
@@ -193,6 +231,7 @@ const useCareerState = () => {
     advanceToNextLevel,
     resetCareer,
     continueCareer,
+    selectLevel,
   };
 };
 

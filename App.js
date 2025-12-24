@@ -30,8 +30,9 @@ import {
   CelebrationText,
   GameOverScreen,
   LevelInfo,
-  MainMenu,
+  CareerMap,
 } from './src/components';
+import { getLevelConfig } from './src/careerLevels';
 import { useGameState, useCareerState } from './src/hooks';
 
 // App screens
@@ -51,15 +52,18 @@ export default function App() {
 
   // Career state management
   const {
-    currentLevelNumber,
-    currentLevel,
+    careerLevelNumber,
+    unlockedLevel,
     totalLevels,
     isLoading,
     hasSavedGame,
+    playingLevelNumber,
+    playingLevel,
     processRunEnd,
     advanceToNextLevel,
     resetCareer,
     continueCareer,
+    selectLevel,
   } = useCareerState();
 
   // Level result state for game over screen
@@ -87,16 +91,17 @@ export default function App() {
     handleGestureUpdate,
     handleGestureEnd,
     restartGame,
-  } = useGameState(currentLevel);
+  } = useGameState(playingLevel);
 
   /**
-   * Handle "Continue" from main menu
+   * Handle level selection from career map
+   * @param {number} levelNumber - Selected level number
    */
-  const handleContinue = useCallback(() => {
-    continueCareer();
+  const handleSelectLevel = useCallback((levelNumber) => {
+    selectLevel(levelNumber);
     setLevelResult(null);
     setCurrentScreen(SCREENS.GAME);
-  }, [continueCareer]);
+  }, [selectLevel]);
 
   /**
    * Handle "New Game" from main menu
@@ -126,7 +131,7 @@ export default function App() {
     if (levelComplete) {
       // Target score reached - process as success
       const result = processRunEnd(score);
-      result.targetScore = currentLevel?.targetScore;
+      result.targetScore = playingLevel?.targetScore;
       setLevelResult(result);
     } else {
       // Game over without reaching target - failure
@@ -134,10 +139,10 @@ export default function App() {
         success: false,
         careerCompleted: false,
         message: 'Score insuffisant',
-        targetScore: currentLevel?.targetScore,
+        targetScore: playingLevel?.targetScore,
       });
     }
-  }, [score, levelComplete, processRunEnd, currentLevel]);
+  }, [score, levelComplete, processRunEnd, playingLevel]);
 
   /**
    * Restart current level
@@ -180,17 +185,17 @@ export default function App() {
     })
     .minDistance(0);
 
-  // Show Main Menu
+  // Show Career Map (Main Menu)
   if (currentScreen === SCREENS.MENU) {
     return (
       <GestureHandlerRootView style={styles.container}>
         <StatusBar style="light" />
-        <MainMenu
-          onContinue={handleContinue}
-          onNewGame={handleNewGame}
-          hasSavedGame={hasSavedGame}
+        <CareerMap
+          currentLevelNumber={careerLevelNumber}
+          unlockedLevel={unlockedLevel}
           isLoading={isLoading}
-          savedLevelNumber={currentLevelNumber}
+          onSelectLevel={handleSelectLevel}
+          onNewGame={handleNewGame}
         />
       </GestureHandlerRootView>
     );
@@ -213,13 +218,13 @@ export default function App() {
       </TouchableOpacity>
 
       {/* Level info display */}
-      {currentLevel && (
+      {playingLevel && (
         <LevelInfo
-          levelNumber={currentLevelNumber}
-          levelName={currentLevel.name}
-          targetScore={currentLevel.targetScore}
+          levelNumber={playingLevelNumber}
+          levelName={playingLevel.name}
+          targetScore={playingLevel.targetScore}
           maxValue={maxValue}
-          stock={currentLevel.stock}
+          stock={playingLevel.stock}
           totalLevels={totalLevels}
         />
       )}
