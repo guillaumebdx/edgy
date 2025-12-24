@@ -2,6 +2,8 @@
 
 Un jeu de puzzle mobile développé avec **React Native** et **Expo**.
 
+Vibe codé et entièrement inventé par Guillaume HARARI
+
 Tracez des chemins sur une grille colorée, fusionnez les cases et déclenchez des réactions en chaîne pour maximiser votre score !
 
 ---
