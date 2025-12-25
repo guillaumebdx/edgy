@@ -34,6 +34,7 @@ const LEVEL_4_IMAGE = require('../../assets/2branches.png');
 const LEVEL_5_IMAGE = require('../../assets/3branches.png');
 const LEVEL_6_IMAGE = require('../../assets/pile.png');
 const LEVEL_7_IMAGE = require('../../assets/wifi.png');
+const LEVEL_8_IMAGE = require('../../assets/_aimant.png');
 
 // Map level IDs to their specific component images
 const LEVEL_COMPONENTS = {
@@ -45,6 +46,7 @@ const LEVEL_COMPONENTS = {
   5: LEVEL_5_IMAGE,
   6: LEVEL_6_IMAGE,
   7: LEVEL_7_IMAGE,
+  8: LEVEL_8_IMAGE,
 };
 
 /**

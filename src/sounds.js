@@ -14,6 +14,7 @@ let successSound = null;
 let errorSound = null;
 let landingSound = null;
 let challengeSound = null;
+let mixSound = null;
 let backgroundMusic = null;
 
 // Global mute state
@@ -97,6 +98,13 @@ export const initSounds = async () => {
     );
     challengeSound = challenge;
 
+    // Preload mix/shuffle sound
+    const { sound: mix } = await Audio.Sound.createAsync(
+      require('../assets/sounds/mix.wav'),
+      { volume: 0.5 }
+    );
+    mixSound = mix;
+
     // Preload background music (looped, menu only)
     const { sound: music } = await Audio.Sound.createAsync(
       require('../assets/sounds/background-music.mp3'),
@@ -169,6 +177,21 @@ export const playChallengeSound = async () => {
 };
 
 /**
+ * Play mix/shuffle sound
+ * Called when player uses shuffle feature
+ */
+export const playMixSound = async () => {
+  if (!mixSound || isMuted) return;
+  
+  try {
+    await mixSound.setPositionAsync(0);
+    await mixSound.playAsync();
+  } catch (error) {
+    console.warn('Failed to play mix sound:', error);
+  }
+};
+
+/**
  * Start background music (menu only)
  * Plays in loop at low volume
  * Checks if already playing to avoid multiple instances
@@ -224,6 +247,10 @@ export const unloadSounds = async () => {
     if (challengeSound) {
       await challengeSound.unloadAsync();
       challengeSound = null;
+    }
+    if (mixSound) {
+      await mixSound.unloadAsync();
+      mixSound = null;
     }
     if (backgroundMusic) {
       await backgroundMusic.unloadAsync();

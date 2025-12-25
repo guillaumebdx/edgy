@@ -244,6 +244,63 @@ export const checkColumnOfValue = (grid, targetValue, gridSize = GRID_SIZE) => {
 };
 
 /**
+ * Check if any valid moves exist on the grid
+ * A valid move requires at least (value + 1) adjacent cells of the same value
+ * @param {(number|null)[]} grid - Current grid
+ * @param {number} gridSize - Size of the grid
+ * @returns {boolean} True if at least one valid move exists
+ */
+export const hasValidMoves = (grid, gridSize = GRID_SIZE) => {
+  // For each cell, check if we can form a valid path starting from it
+  for (let startIndex = 0; startIndex < grid.length; startIndex++) {
+    const value = grid[startIndex];
+    if (value === null) continue;
+    
+    // We need at least (value + 1) cells to form a valid path
+    const requiredLength = value + 1;
+    
+    // BFS to find connected cells of same value
+    const visited = new Set();
+    const queue = [startIndex];
+    visited.add(startIndex);
+    
+    while (queue.length > 0 && visited.size < requiredLength) {
+      const current = queue.shift();
+      const currentPos = { 
+        row: Math.floor(current / gridSize), 
+        col: current % gridSize 
+      };
+      
+      // Check all 8 adjacent cells
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          
+          const newRow = currentPos.row + dr;
+          const newCol = currentPos.col + dc;
+          
+          if (newRow < 0 || newRow >= gridSize || newCol < 0 || newCol >= gridSize) continue;
+          
+          const neighborIndex = newRow * gridSize + newCol;
+          
+          if (!visited.has(neighborIndex) && grid[neighborIndex] === value) {
+            visited.add(neighborIndex);
+            queue.push(neighborIndex);
+          }
+        }
+      }
+    }
+    
+    // If we found enough connected cells, a valid move exists
+    if (visited.size >= requiredLength) {
+      return true;
+    }
+  }
+  
+  return false;
+};
+
+/**
  * Converts screen coordinates to cell index
  * @param {number} x - X coordinate
  * @param {number} y - Y coordinate

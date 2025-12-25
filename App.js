@@ -126,11 +126,15 @@ export default function App() {
     celebration,
     gridSize,
     maxValue,
+    shufflesRemaining,
+    isShuffling,
+    noMovesAvailable,
     handleGridLayout,
     handleGestureBegin,
     handleGestureUpdate,
     handleGestureEnd,
     restartGame,
+    shuffleGrid,
   } = useGameState(playingLevel, tutorialState);
 
   // Level entry animation
@@ -163,6 +167,28 @@ export default function App() {
   
   const scoreBlinkStyle = useAnimatedStyle(() => ({
     opacity: scoreBlinkOpacity.value,
+  }));
+
+  // Shuffle button blinking animation when no moves available
+  const shuffleBlinkOpacity = useSharedValue(1);
+  
+  useEffect(() => {
+    if (noMovesAvailable && shufflesRemaining > 0) {
+      shuffleBlinkOpacity.value = withRepeat(
+        withSequence(
+          withTiming(0.3, { duration: 300 }),
+          withTiming(1, { duration: 300 })
+        ),
+        -1,
+        false
+      );
+    } else {
+      shuffleBlinkOpacity.value = 1;
+    }
+  }, [noMovesAvailable, shufflesRemaining]);
+  
+  const shuffleBlinkStyle = useAnimatedStyle(() => ({
+    opacity: shuffleBlinkOpacity.value,
   }));
 
   /**
@@ -343,6 +369,24 @@ export default function App() {
           <Text style={styles.stockText}>{stock}</Text>
           <Text style={styles.stockLabel}>restantes</Text>
         </View>
+        {/* Shuffle button - only shown when shuffles available */}
+        {(playingLevel?.shuffles > 0 || shufflesRemaining > 0) && (
+          <Animated.View style={[noMovesAvailable && shuffleBlinkStyle]}>
+            <TouchableOpacity 
+              style={[
+                styles.shuffleButton,
+                shufflesRemaining === 0 && styles.shuffleButtonDisabled,
+                isShuffling && styles.shuffleButtonActive,
+                noMovesAvailable && styles.shuffleButtonUrgent,
+              ]}
+              onPress={shuffleGrid}
+              disabled={shufflesRemaining === 0 || isShuffling}
+            >
+              <Text style={styles.shuffleIcon}>🔀</Text>
+              <Text style={styles.shuffleCount}>{shufflesRemaining}</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
       </View>
 
       {/* Grid Container */}
@@ -393,6 +437,7 @@ export default function App() {
                   isChallengeColumn={isChallengeColumn}
                   entryPhase={entryPhase}
                   entryDelay={entryDelay}
+                  isShuffling={isShuffling}
                 />
               );
             })}

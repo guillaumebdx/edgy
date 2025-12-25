@@ -91,6 +91,38 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.5)',
   },
+  shuffleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(100, 160, 180, 0.3)',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 160, 180, 0.5)',
+    gap: 4,
+  },
+  shuffleButtonDisabled: {
+    backgroundColor: 'rgba(80, 80, 80, 0.2)',
+    borderColor: 'rgba(80, 80, 80, 0.3)',
+  },
+  shuffleButtonActive: {
+    backgroundColor: 'rgba(100, 200, 180, 0.4)',
+    borderColor: 'rgba(100, 200, 180, 0.6)',
+  },
+  shuffleButtonUrgent: {
+    backgroundColor: 'rgba(255, 150, 100, 0.5)',
+    borderColor: 'rgba(255, 150, 100, 0.8)',
+    borderWidth: 2,
+  },
+  shuffleIcon: {
+    fontSize: 16,
+  },
+  shuffleCount: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
 });
 
 export default styles;

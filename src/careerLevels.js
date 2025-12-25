@@ -169,6 +169,16 @@ export const CAREER_LEVELS = [
       description: 'Aligner une colonne complète de 5',
     },
   },
+  {
+    id: 8,
+    name: 'Attraction magnétique',
+    gridSize: 7,
+    maxValue: 7,
+    stock: 60,
+    targetScore: 7000,
+    shuffles: 2, // New shuffle feature
+    challenge: null,
+  },
 ];
 
 /**

@@ -22,7 +22,7 @@ import {
   areAdjacent,
   applyGravityAndFill,
   calculateFallDistances,
-  hasValidMove,
+  hasValidMoves,
   getCellFromPosition,
   checkColumnOfValue,
 } from '../gameLogic';
@@ -35,7 +35,7 @@ import {
   getFloatingScoreText,
 } from '../scoreManager';
 import * as Haptics from 'expo-haptics';
-import { playSuccessSound, playErrorSound, playLandingSound, playChallengeSound } from '../sounds';
+import { playSuccessSound, playErrorSound, playLandingSound, playChallengeSound, playMixSound } from '../sounds';
 
 /**
  * Custom hook for managing all game state and logic
@@ -51,6 +51,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   const maxValue = levelConfig?.maxValue || DEFAULT_MAX_VALUE;
   const initialStock = levelConfig?.stock || DEFAULT_STOCK;
   const targetScore = levelConfig?.targetScore || null;
+  const initialShuffles = levelConfig?.shuffles || 0;
   
   // Tutorial configuration
   const tutorial = levelConfig?.tutorial || null;
@@ -86,6 +87,11 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   const challenge = levelConfig?.challenge || null;
   const challengeRef = useRef(challenge);
   
+  // Shuffle state
+  const [shufflesRemaining, setShufflesRemaining] = useState(initialShuffles);
+  const [isShuffling, setIsShuffling] = useState(false);
+  const [noMovesAvailable, setNoMovesAvailable] = useState(false);
+  
   // Store targetScore in ref for use in callbacks
   const targetScoreRef = useRef(targetScore);
 
@@ -98,6 +104,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   const pathValueRef = useRef(null);
   const isResolvingRef = useRef(false);
   const stockRef = useRef(initialStock);
+  const shufflesRemainingRef = useRef(initialShuffles);
   
   // Store level params in refs for use in callbacks
   const gridSizeRef = useRef(gridSize);
@@ -115,6 +122,11 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     challengeRef.current = challenge;
   }, [gridSize, maxValue, targetScore, challenge]);
   
+  // Keep shufflesRemainingRef in sync
+  useEffect(() => {
+    shufflesRemainingRef.current = shufflesRemaining;
+  }, [shufflesRemaining]);
+  
   // Reset game state when level changes (different level ID)
   useEffect(() => {
     if (prevLevelIdRef.current !== levelId) {
@@ -130,6 +142,10 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       setLevelComplete(false);
       setChallengeCompleted(false);
       setChallengeColumn(null);
+      setShufflesRemaining(initialShuffles);
+      shufflesRemainingRef.current = initialShuffles;
+      setIsShuffling(false);
+      setNoMovesAvailable(false);
       setPath([]);
       pathRef.current = [];
       pathValueRef.current = null;
@@ -138,7 +154,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       setShakingCells([]);
       setFallingCells({});
     }
-  }, [levelId, gridSize, maxValue, initialStock]);
+  }, [levelId, gridSize, maxValue, initialStock, initialShuffles]);
 
   /**
    * Handles grid layout measurement for touch coordinate conversion
@@ -208,6 +224,46 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       ANIMATION.CELEBRATION_DURATION
     );
   }, []);
+
+  /**
+   * Shows "no moves" message
+   */
+  const showNoMovesMessage = useCallback(() => {
+    setCelebration({ visible: true, text: 'Plus de moove !', key: Date.now() });
+    setTimeout(
+      () => setCelebration((prev) => ({ ...prev, visible: false })),
+      ANIMATION.CELEBRATION_DURATION + 500
+    );
+  }, []);
+
+  // Check for no valid moves after grid changes
+  useEffect(() => {
+    // Don't check during animations, game over, level complete, or tutorial
+    if (isShuffling || gameOver || levelComplete || isTutorialLevel) {
+      setNoMovesAvailable(false);
+      return;
+    }
+    
+    // Small delay to let animations finish
+    const timer = setTimeout(() => {
+      const hasMoves = hasValidMoves(gridData, gridSize);
+      if (!hasMoves) {
+        if (shufflesRemaining > 0) {
+          // Still have shuffles - show message and blink button
+          setNoMovesAvailable(true);
+          showNoMovesMessage();
+        } else {
+          // No shuffles left - game over
+          setNoMovesAvailable(false);
+          setGameOver(true);
+        }
+      } else {
+        setNoMovesAvailable(false);
+      }
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [gridData, gridSize, isShuffling, gameOver, levelComplete, isTutorialLevel, shufflesRemaining, showNoMovesMessage]);
 
   /**
    * Check if challenge is completed on current grid
@@ -387,9 +443,9 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
                 // Check challenge after gravity settles
                 checkChallenge(newGrid);
 
-                // Only check for game over if level not already complete
+                // Only check for game over if level not already complete and no shuffles remaining
                 setLevelComplete((isComplete) => {
-                  if (!isComplete && !hasValidMove(newGrid, gridSizeRef.current)) {
+                  if (!isComplete && !hasValidMoves(newGrid, gridSizeRef.current) && shufflesRemainingRef.current === 0) {
                     setGameOver(true);
                   }
                   return isComplete;
@@ -423,9 +479,9 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
           // Check challenge after transformation
           checkChallenge(currentGrid);
           
-          // Only check for game over if level not already complete
+          // Only check for game over if level not already complete and no shuffles remaining
           setLevelComplete((isComplete) => {
-            if (!isComplete && !hasValidMove(currentGrid, gridSizeRef.current)) {
+            if (!isComplete && !hasValidMoves(currentGrid, gridSizeRef.current) && shufflesRemainingRef.current === 0) {
               setGameOver(true);
             }
             return isComplete;
@@ -444,6 +500,40 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   }, [combo, triggerHaptic, showFloatingScore, showCelebration, checkChallenge, tutorialHandlers]);
 
   /**
+   * Shuffles the existing grid cells (does not create new values)
+   * Uses Fisher-Yates shuffle algorithm
+   */
+  const shuffleGrid = useCallback(() => {
+    if (shufflesRemaining <= 0 || isShuffling || gameOver || isTutorialLevel) return;
+    
+    setIsShuffling(true);
+    setShufflesRemaining(prev => prev - 1);
+    playMixSound();
+    
+    // Get all non-null cell values and their positions
+    const values = gridData.filter(v => v !== null);
+    
+    // Fisher-Yates shuffle
+    for (let i = values.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [values[i], values[j]] = [values[j], values[i]];
+    }
+    
+    // Rebuild grid with shuffled values
+    let valueIndex = 0;
+    const newGrid = gridData.map(cell => {
+      if (cell === null) return null;
+      return values[valueIndex++];
+    });
+    
+    // Apply with animation delay
+    setTimeout(() => {
+      setGridData(newGrid);
+      setIsShuffling(false);
+    }, 300);
+  }, [shufflesRemaining, isShuffling, gameOver, isTutorialLevel, gridData]);
+
+  /**
    * Restarts the game with fresh state using current level parameters
    */
   const restartGame = useCallback(() => {
@@ -457,13 +547,17 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     setLevelComplete(false);
     setChallengeCompleted(false);
     setChallengeColumn(null);
+    setShufflesRemaining(initialShuffles);
+    shufflesRemainingRef.current = initialShuffles;
+    setIsShuffling(false);
+    setNoMovesAvailable(false);
     setPath([]);
     pathRef.current = [];
     pathValueRef.current = null;
     isResolvingRef.current = false;
     // Reset tutorial state if in tutorial mode
     tutorialHandlers?.resetTutorial?.();
-  }, [initialStock, tutorial, tutorialHandlers]);
+  }, [initialStock, initialShuffles, tutorial, tutorialHandlers]);
 
   /**
    * Gesture handlers for pan gesture
@@ -510,6 +604,9 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     challengeColumn,
     floatingScore,
     celebration,
+    shufflesRemaining,
+    isShuffling,
+    noMovesAvailable,
     
     // Level parameters (for UI display)
     gridSize,
@@ -522,6 +619,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     handleGestureUpdate,
     handleGestureEnd,
     restartGame,
+    shuffleGrid,
   };
 };
 

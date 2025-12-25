@@ -33,6 +33,8 @@ const AnimatedCell = ({
   // Entry animation props
   entryPhase = 'ready', // 'falling' | 'revealing' | 'ready'
   entryDelay = 0,
+  // Shuffle animation
+  isShuffling = false,
 }) => {
   // Calculate cell size based on gridSize
   const cellSizePercent = 100 / gridSize;
@@ -53,6 +55,8 @@ const AnimatedCell = ({
   const translateY = useSharedValue(0);
   const pressScale = useSharedValue(1);
   const challengeGlow = useSharedValue(0);
+  const shuffleRotate = useSharedValue(0);
+  const shuffleScale = useSharedValue(1);
   
   // Entry animation shared values
   const entryTranslateY = useSharedValue(entryPhase === 'falling' ? -400 : 0);
@@ -105,6 +109,31 @@ const AnimatedCell = ({
     }
   }, [isChallengeColumn]);
 
+  // Shuffle animation
+  useEffect(() => {
+    if (isShuffling) {
+      // Random delay for staggered effect
+      const randomDelay = Math.random() * 100;
+      shuffleScale.value = withDelay(
+        randomDelay,
+        withSequence(
+          withTiming(0.3, { duration: 150, easing: Easing.in(Easing.ease) }),
+          withTiming(1, { duration: 150, easing: Easing.out(Easing.ease) })
+        )
+      );
+      shuffleRotate.value = withDelay(
+        randomDelay,
+        withSequence(
+          withTiming(180, { duration: 150 }),
+          withTiming(360, { duration: 150 })
+        )
+      );
+    } else {
+      shuffleRotate.value = 0;
+      shuffleScale.value = 1;
+    }
+  }, [isShuffling]);
+
   // Press animation when cell is in path - snappy with subtle bounce
   useEffect(() => {
     if (isInPath) {
@@ -153,7 +182,8 @@ const AnimatedCell = ({
     transform: [
       { translateX: shakeAnim.value },
       { translateY: translateY.value + entryTranslateY.value },
-      { scale: scaleAnim.value * pressScale.value * entryScale.value },
+      { scale: scaleAnim.value * pressScale.value * entryScale.value * shuffleScale.value },
+      { rotateZ: `${shuffleRotate.value}deg` },
     ],
     opacity: opacityAnim.value,
   }));
