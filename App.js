@@ -31,9 +31,10 @@ import {
   GameOverScreen,
   LevelInfo,
   CareerMap,
+  TutorialOverlay,
 } from './src/components';
 import { getLevelConfig } from './src/careerLevels';
-import { useGameState, useCareerState } from './src/hooks';
+import { useGameState, useCareerState, useTutorialState } from './src/hooks';
 import { initSounds, unloadSounds, startBackgroundMusic, stopBackgroundMusic } from './src/sounds';
 
 // App screens
@@ -93,6 +94,11 @@ export default function App() {
   // Level result state for game over screen
   const [levelResult, setLevelResult] = useState(null);
 
+  // Tutorial state management
+  const tutorialConfig = playingLevel?.tutorial || null;
+  const isTutorialLevel = !!tutorialConfig;
+  const tutorialState = useTutorialState(tutorialConfig, isTutorialLevel);
+
   // Get all game state and handlers from custom hook with level config
   const {
     gridData,
@@ -117,7 +123,7 @@ export default function App() {
     handleGestureUpdate,
     handleGestureEnd,
     restartGame,
-  } = useGameState(playingLevel);
+  } = useGameState(playingLevel, tutorialState);
 
   /**
    * Handle level selection from career map
@@ -330,6 +336,16 @@ export default function App() {
                   />
                 ))}
               </View>
+            )}
+
+            {/* Tutorial guide overlay */}
+            {isTutorialLevel && (
+              <TutorialOverlay
+                expectedPath={tutorialState.expectedPath}
+                hint={tutorialState.hint}
+                gridLayout={gridLayout}
+                visible={tutorialState.showGuide && !gameOver}
+              />
             )}
           </View>
         </GestureDetector>

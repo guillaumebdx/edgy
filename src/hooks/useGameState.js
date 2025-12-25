@@ -45,15 +45,21 @@ import { playSuccessSound, playErrorSound, playLandingSound } from '../sounds';
  * @param {number} levelConfig.stock - Initial stock (default: 50)
  * @returns {Object} Game state and action handlers
  */
-const useGameState = (levelConfig = null) => {
+const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   // Extract level parameters with defaults
   const gridSize = levelConfig?.gridSize || DEFAULT_GRID_SIZE;
   const maxValue = levelConfig?.maxValue || DEFAULT_MAX_VALUE;
   const initialStock = levelConfig?.stock || DEFAULT_STOCK;
   const targetScore = levelConfig?.targetScore || null;
+  
+  // Tutorial configuration
+  const tutorial = levelConfig?.tutorial || null;
+  const isTutorialLevel = !!tutorial;
 
-  // Grid and visual state
-  const [gridData, setGridData] = useState(() => generateGrid(gridSize, maxValue));
+  // Grid and visual state - use fixed grid for tutorial
+  const [gridData, setGridData] = useState(() => 
+    tutorial?.initialGrid ? [...tutorial.initialGrid] : generateGrid(gridSize, maxValue)
+  );
   const [exceededCells, setExceededCells] = useState([]);
   const [shakingCells, setShakingCells] = useState([]);
   const [fallingCells, setFallingCells] = useState({});
@@ -114,8 +120,8 @@ const useGameState = (levelConfig = null) => {
     if (prevLevelIdRef.current !== levelId) {
       prevLevelIdRef.current = levelId;
       
-      // Reset all game state for new level
-      setGridData(generateGrid(gridSize, maxValue));
+      // Reset all game state for new level - use fixed grid for tutorial
+      setGridData(tutorial?.initialGrid ? [...tutorial.initialGrid] : generateGrid(gridSize, maxValue));
       setScore(0);
       setCombo(0);
       stockRef.current = initialStock;
@@ -263,11 +269,15 @@ const useGameState = (levelConfig = null) => {
 
     pathRef.current = [...pathRef.current, cellIndex];
     setPath([...pathRef.current]);
-  }, []);
+    
+    // Validate tutorial path (hides guide when player starts correct path)
+    tutorialHandlers?.validateTutorialPath?.(pathRef.current);
+  }, [tutorialHandlers]);
 
   /**
    * Validates and transforms the current path
    * Core game logic for move resolution
+   * In tutorial mode, only expected paths are processed
    */
   const validateAndTransformPath = useCallback(() => {
     if (isResolvingRef.current) return;
@@ -281,6 +291,16 @@ const useGameState = (levelConfig = null) => {
     pathValueRef.current = null;
     setPath([]);
 
+    // Tutorial mode: check if path matches expected path
+    if (tutorialHandlers?.isPathComplete) {
+      const isCorrectPath = tutorialHandlers.isPathComplete(currentPath);
+      if (!isCorrectPath) {
+        // Wrong path in tutorial - silently ignore, no error sound
+        tutorialHandlers.cancelPath?.();
+        return;
+      }
+    }
+
     // Check if path is valid (length > value)
     if (pathLength > pathValue) {
       isResolvingRef.current = true;
@@ -288,6 +308,9 @@ const useGameState = (levelConfig = null) => {
       
       // Play success sound on valid path confirmation (before any destruction/gravity)
       playSuccessSound();
+      
+      // Advance tutorial step if in tutorial mode
+      tutorialHandlers?.advanceStep?.();
 
       const basePoints = calculateBasePoints(pathLength, currentPath.length);
 
@@ -362,9 +385,13 @@ const useGameState = (levelConfig = null) => {
                 // Check challenge after gravity settles
                 checkChallenge(newGrid);
 
-                if (!hasValidMove(newGrid, gridSizeRef.current)) {
-                  setGameOver(true);
-                }
+                // Only check for game over if level not already complete
+                setLevelComplete((isComplete) => {
+                  if (!isComplete && !hasValidMove(newGrid, gridSizeRef.current)) {
+                    setGameOver(true);
+                  }
+                  return isComplete;
+                });
               }, ANIMATION.FALL_ANIMATION_DURATION);
             }, 50);
 
@@ -394,23 +421,32 @@ const useGameState = (levelConfig = null) => {
           // Check challenge after transformation
           checkChallenge(currentGrid);
           
-          if (!hasValidMove(currentGrid, gridSizeRef.current)) {
-            setGameOver(true);
-          }
+          // Only check for game over if level not already complete
+          setLevelComplete((isComplete) => {
+            if (!isComplete && !hasValidMove(currentGrid, gridSizeRef.current)) {
+              setGameOver(true);
+            }
+            return isComplete;
+          });
           return currentGrid;
         });
       }
     } else if (pathLength > 0) {
-      // Path is invalid (too short) - play error sound
-      playErrorSound();
+      // Path is invalid (too short) - play error sound (but not in tutorial)
+      if (!tutorialHandlers?.isTutorialActive) {
+        playErrorSound();
+      } else {
+        tutorialHandlers.cancelPath?.();
+      }
     }
-  }, [combo, triggerHaptic, showFloatingScore, showCelebration, checkChallenge]);
+  }, [combo, triggerHaptic, showFloatingScore, showCelebration, checkChallenge, tutorialHandlers]);
 
   /**
    * Restarts the game with fresh state using current level parameters
    */
   const restartGame = useCallback(() => {
-    setGridData(generateGrid(gridSizeRef.current, maxValueRef.current));
+    // Use fixed grid for tutorial, random for normal levels
+    setGridData(tutorial?.initialGrid ? [...tutorial.initialGrid] : generateGrid(gridSizeRef.current, maxValueRef.current));
     setScore(0);
     setCombo(0);
     stockRef.current = initialStock;
@@ -423,7 +459,9 @@ const useGameState = (levelConfig = null) => {
     pathRef.current = [];
     pathValueRef.current = null;
     isResolvingRef.current = false;
-  }, [initialStock]);
+    // Reset tutorial state if in tutorial mode
+    tutorialHandlers?.resetTutorial?.();
+  }, [initialStock, tutorial, tutorialHandlers]);
 
   /**
    * Gesture handlers for pan gesture
@@ -474,6 +512,7 @@ const useGameState = (levelConfig = null) => {
     // Level parameters (for UI display)
     gridSize,
     maxValue,
+    isTutorialLevel,
 
     // Actions
     handleGridLayout,

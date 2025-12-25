@@ -107,13 +107,17 @@ export const playLandingSound = async () => {
 /**
  * Start background music (menu only)
  * Plays in loop at low volume
+ * Checks if already playing to avoid multiple instances
  */
 export const startBackgroundMusic = async () => {
   if (!backgroundMusic) return;
   
   try {
-    await backgroundMusic.setPositionAsync(0);
-    await backgroundMusic.playAsync();
+    const status = await backgroundMusic.getStatusAsync();
+    if (status.isLoaded && !status.isPlaying) {
+      await backgroundMusic.setPositionAsync(0);
+      await backgroundMusic.playAsync();
+    }
   } catch (error) {
     console.warn('Failed to start background music:', error);
   }
@@ -127,7 +131,10 @@ export const stopBackgroundMusic = async () => {
   if (!backgroundMusic) return;
   
   try {
-    await backgroundMusic.stopAsync();
+    const status = await backgroundMusic.getStatusAsync();
+    if (status.isLoaded && status.isPlaying) {
+      await backgroundMusic.stopAsync();
+    }
   } catch (error) {
     console.warn('Failed to stop background music:', error);
   }

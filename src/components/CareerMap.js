@@ -6,7 +6,7 @@
  * Vertical scrolling navigation through career progression
  */
 
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -17,12 +17,14 @@ import {
   StyleSheet,
   Dimensions,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { CAREER_LEVELS } from '../careerLevels';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Hardcoded assets for each level (1 unique asset per level)
+const LEVEL_0_IMAGE = require('../../assets/tuto.png'); // Tutorial level
 const LEVEL_1_IMAGE = require('../../assets/led.png');
 const LEVEL_2_IMAGE = require('../../assets/resistance.png');
 const LEVEL_3_IMAGE = require('../../assets/transistor.png');
@@ -33,6 +35,7 @@ const LEVEL_7_IMAGE = require('../../assets/wifi.png');
 
 // Map level IDs to their specific component images
 const LEVEL_COMPONENTS = {
+  0: LEVEL_0_IMAGE,
   1: LEVEL_1_IMAGE,
   2: LEVEL_2_IMAGE,
   3: LEVEL_3_IMAGE,
@@ -245,6 +248,37 @@ const CareerMap = ({
   onSelectLevel,
   onNewGame,
 }) => {
+  // Hidden reset feature - 5 taps on title
+  const [tapCount, setTapCount] = useState(0);
+  const tapTimeoutRef = useRef(null);
+
+  const handleTitleTap = () => {
+    // Clear previous timeout
+    if (tapTimeoutRef.current) {
+      clearTimeout(tapTimeoutRef.current);
+    }
+
+    const newCount = tapCount + 1;
+    setTapCount(newCount);
+
+    if (newCount >= 5) {
+      // Reset tap count and show confirmation
+      setTapCount(0);
+      Alert.alert(
+        'Réinitialiser',
+        'Voulez-vous réinitialiser la partie ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Confirmer', style: 'destructive', onPress: onNewGame },
+        ]
+      );
+    } else {
+      // Reset tap count after 1 second of inactivity
+      tapTimeoutRef.current = setTimeout(() => {
+        setTapCount(0);
+      }, 1000);
+    }
+  };
   if (isLoading) {
     return (
       <ImageBackground
@@ -275,9 +309,11 @@ const CareerMap = ({
       style={styles.container}
       resizeMode="cover"
     >
-      {/* Header */}
+      {/* Header - tap EDGY 5 times to reset */}
       <View style={styles.header}>
-        <Text style={styles.title}>EDGY</Text>
+        <TouchableOpacity onPress={handleTitleTap} activeOpacity={0.8}>
+          <Text style={styles.title}>EDGY</Text>
+        </TouchableOpacity>
         <Text style={styles.subtitle}>CIRCUIT</Text>
       </View>
 
@@ -328,16 +364,6 @@ const CareerMap = ({
         <View style={styles.bottomSpacer} />
       </ScrollView>
 
-      {/* New Game button at bottom */}
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.newGameButton}
-          onPress={onNewGame}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.newGameText}>Nouvelle partie</Text>
-        </TouchableOpacity>
-      </View>
     </ImageBackground>
   );
 };
@@ -612,34 +638,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
   },
   bottomSpacer: {
-    height: 100,
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingVertical: 20,
-    paddingHorizontal: 40,
-    paddingBottom: 40,
-    backgroundColor: 'rgba(10, 10, 12, 0.95)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(60, 80, 100, 0.3)',
-  },
-  newGameButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(100, 100, 110, 0.4)',
-    alignItems: 'center',
-  },
-  newGameText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.6)',
-    textTransform: 'uppercase',
-    letterSpacing: 2,
+    height: 40,
   },
 });
 

@@ -10,6 +10,7 @@
  * - challenge: optional challenge for stars (levels 6+)
  *   - type: challenge type identifier
  *   - description: human-readable description
+ * - tutorial: optional tutorial configuration for guided levels
  * 
  * Stars system:
  * - Levels 1-5: 3 stars automatically on completion
@@ -24,7 +25,79 @@ export const CHALLENGE_TYPES = {
   COLUMN_OF_FIVES: 'column_of_fives', // Full column of value 5
 };
 
+/**
+ * Tutorial level configuration
+ * Fixed 4x4 grid with deterministic steps
+ * Grid layout (indices):
+ *  0  1  2  3
+ *  4  5  6  7
+ *  8  9 10 11
+ * 12 13 14 15
+ * 
+ * Initial grid designed for teaching:
+ *  1  1  2  3
+ *  2  1  2  3
+ *  1  2  3  3
+ *  2  3  3  3
+ * 
+ * Tutorial teaches:
+ * 1. Basic merging (2 cells -> value 2)
+ * 2. Longer chains (3 cells -> value 3)
+ * 3. Exceeding MAX causes destruction
+ * 4. Big chains = big points
+ */
+const TUTORIAL_CONFIG = {
+  // Initial fixed grid - designed for teaching with variety
+  initialGrid: [
+    1, 1, 2, 3,
+    2, 1, 2, 3,
+    1, 2, 3, 3,
+    2, 3, 3, 3,
+  ],
+  // Tutorial steps - each step has expected path and hint
+  steps: [
+    {
+      id: 1,
+      hint: 'Relie 2 cases identiques',
+      expectedPath: [0, 1], // Two 1s -> become 2
+    },
+    {
+      id: 2,
+      hint: '2 cases = valeur 2 !',
+      expectedPath: [5, 8], // Two 1s -> become 2
+    },
+    {
+      id: 3,
+      hint: '3 cases = valeur 3',
+      expectedPath: [2, 6, 9], // Three 2s -> become 3
+    },
+    {
+      id: 4,
+      hint: 'Dépasse MAX pour détruire !',
+      expectedPath: [3, 7, 11, 10, 14, 15], // Six 3s -> become 6, exceeds MAX 3
+      // Path: 3→7 (down), 7→11 (down), 11→10 (left), 10→14 (down), 14→15 (right)
+    },
+    {
+      id: 5,
+      hint: 'Termine avec les cases restantes',
+      // After destruction and gravity, left column has 2s
+      expectedPath: [0, 4, 8, 12], // Four 2s in left column -> become 4, exceeds MAX 3
+      isLastStep: true,
+    },
+  ],
+};
+
 export const CAREER_LEVELS = [
+  {
+    id: 0,
+    name: 'Tutoriel',
+    gridSize: 4,
+    maxValue: 3,
+    stock: 0, // No stock refill in tutorial
+    targetScore: 300, // Requires completing all steps including final destruction
+    challenge: null,
+    tutorial: TUTORIAL_CONFIG,
+  },
   {
     id: 1,
     name: 'Initiation',

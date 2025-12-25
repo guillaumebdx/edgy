@@ -30,13 +30,14 @@ import {
  */
 const useCareerState = () => {
   // Career progress level - the actual progression (persisted in DB)
-  const [careerLevelNumber, setCareerLevelNumber] = useState(1);
+  // Starts at 0 (tutorial) for new players
+  const [careerLevelNumber, setCareerLevelNumber] = useState(0);
   
   // Currently playing level - may differ when replaying previous levels
-  const [playingLevelNumber, setPlayingLevelNumber] = useState(1);
+  const [playingLevelNumber, setPlayingLevelNumber] = useState(0);
   
-  // Highest unlocked level
-  const [unlockedLevel, setUnlockedLevel] = useState(1);
+  // Highest unlocked level (0 = tutorial only)
+  const [unlockedLevel, setUnlockedLevel] = useState(0);
   
   // Career completion flag
   const [careerCompleted, setCareerCompleted] = useState(false);
@@ -218,15 +219,16 @@ const useCareerState = () => {
   }, [playingLevelNumber, unlockedLevel]);
 
   /**
-   * Reset career to level 1 (new game)
+   * Reset career to level 0 (tutorial - new game)
    * Clears SQLite storage
    */
   const resetCareer = useCallback(async () => {
-    setCareerLevelNumber(1);
-    setPlayingLevelNumber(1);
-    setUnlockedLevel(1);
+    setCareerLevelNumber(0);
+    setPlayingLevelNumber(0);
+    setUnlockedLevel(0);
     setCareerCompleted(false);
     setHasSavedGame(false);
+    setLevelStars({});
     
     // Clear SQLite storage
     await resetCareerProgress();
