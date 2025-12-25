@@ -12,20 +12,32 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 /**
- * Check if two paths are equivalent (same cells, same order)
+ * Check if two paths are equivalent (same cells, either direction)
  */
 const pathsMatch = (path1, path2) => {
   if (path1.length !== path2.length) return false;
-  return path1.every((cell, index) => cell === path2[index]);
+  // Check forward direction
+  const forwardMatch = path1.every((cell, index) => cell === path2[index]);
+  if (forwardMatch) return true;
+  // Check reverse direction
+  const reversedPath2 = [...path2].reverse();
+  return path1.every((cell, index) => cell === reversedPath2[index]);
 };
 
 /**
- * Check if path1 starts with the beginning of path2
+ * Check if path1 starts with the beginning of path2 (in either direction)
  */
 const pathStartsCorrectly = (playerPath, expectedPath) => {
   if (playerPath.length === 0) return true;
   if (playerPath.length > expectedPath.length) return false;
-  return playerPath.every((cell, index) => cell === expectedPath[index]);
+  
+  // Check forward direction
+  const forwardMatch = playerPath.every((cell, index) => cell === expectedPath[index]);
+  if (forwardMatch) return true;
+  
+  // Check reverse direction
+  const reversedExpected = [...expectedPath].reverse();
+  return playerPath.every((cell, index) => cell === reversedExpected[index]);
 };
 
 /**
