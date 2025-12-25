@@ -13,6 +13,7 @@ import * as SQLite from 'expo-sqlite';
 
 const DATABASE_NAME = 'edgy_career.db';
 const TABLE_NAME = 'career_progress';
+const STARS_TABLE = 'level_stars';
 
 let db = null;
 
@@ -30,6 +31,15 @@ export const initDatabase = async () => {
       CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
         key TEXT PRIMARY KEY NOT NULL,
         value TEXT NOT NULL,
+        updated_at INTEGER DEFAULT (strftime('%s', 'now'))
+      );
+    `);
+    
+    // Create level_stars table for star system
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS ${STARS_TABLE} (
+        level_id INTEGER PRIMARY KEY NOT NULL,
+        stars INTEGER NOT NULL DEFAULT 0,
         updated_at INTEGER DEFAULT (strftime('%s', 'now'))
       );
     `);
@@ -143,4 +153,85 @@ export const resetCareerProgress = async () => {
 export const hasSavedProgress = async () => {
   const progress = await loadCareerProgress();
   return progress !== null;
+};
+
+/**
+ * Save stars for a specific level
+ * Only updates if new stars count is higher (stars are permanent)
+ * @param {number} levelId - Level ID
+ * @param {number} stars - Number of stars (0-3)
+ * @returns {Promise<boolean>}
+ */
+export const saveLevelStars = async (levelId, stars) => {
+  if (!db) {
+    const initialized = await initDatabase();
+    if (!initialized) return false;
+  }
+  
+  try {
+    const timestamp = Math.floor(Date.now() / 1000);
+    
+    // Only update if new stars count is higher (stars are permanent)
+    await db.runAsync(
+      `INSERT INTO ${STARS_TABLE} (level_id, stars, updated_at) VALUES (?, ?, ?)
+       ON CONFLICT(level_id) DO UPDATE SET 
+         stars = MAX(${STARS_TABLE}.stars, excluded.stars),
+         updated_at = excluded.updated_at`,
+      [levelId, stars, timestamp]
+    );
+    
+    return true;
+  } catch (error) {
+    console.error('Failed to save level stars:', error);
+    return false;
+  }
+};
+
+/**
+ * Load stars for a specific level
+ * @param {number} levelId - Level ID
+ * @returns {Promise<number>} Number of stars (0 if none)
+ */
+export const loadLevelStars = async (levelId) => {
+  if (!db) {
+    const initialized = await initDatabase();
+    if (!initialized) return 0;
+  }
+  
+  try {
+    const row = await db.getFirstAsync(
+      `SELECT stars FROM ${STARS_TABLE} WHERE level_id = ?`,
+      [levelId]
+    );
+    
+    return row ? row.stars : 0;
+  } catch (error) {
+    console.error('Failed to load level stars:', error);
+    return 0;
+  }
+};
+
+/**
+ * Load stars for all levels
+ * @returns {Promise<Object>} Map of levelId -> stars
+ */
+export const loadAllStars = async () => {
+  if (!db) {
+    const initialized = await initDatabase();
+    if (!initialized) return {};
+  }
+  
+  try {
+    const rows = await db.getAllAsync(`SELECT level_id, stars FROM ${STARS_TABLE}`);
+    
+    const starsMap = {};
+    rows.forEach(row => {
+      starsMap[row.level_id] = row.stars;
+    });
+    
+    return starsMap;
+  } catch (error) {
+    console.error('Failed to load all stars:', error);
+    return {};
+  }
 };

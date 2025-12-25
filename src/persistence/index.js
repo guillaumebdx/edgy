@@ -9,4 +9,7 @@ export {
   saveCareerProgress,
   resetCareerProgress,
   hasSavedProgress,
+  saveLevelStars,
+  loadLevelStars,
+  loadAllStars,
 } from './careerStorage';

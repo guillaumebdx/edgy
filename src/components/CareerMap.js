@@ -28,6 +28,8 @@ const LEVEL_2_IMAGE = require('../../assets/resistance.png');
 const LEVEL_3_IMAGE = require('../../assets/transistor.png');
 const LEVEL_4_IMAGE = require('../../assets/2branches.png');
 const LEVEL_5_IMAGE = require('../../assets/3branches.png');
+const LEVEL_6_IMAGE = require('../../assets/pile.png');
+const LEVEL_7_IMAGE = require('../../assets/wifi.png');
 
 // Map level IDs to their specific component images
 const LEVEL_COMPONENTS = {
@@ -36,6 +38,31 @@ const LEVEL_COMPONENTS = {
   3: LEVEL_3_IMAGE,
   4: LEVEL_4_IMAGE,
   5: LEVEL_5_IMAGE,
+  6: LEVEL_6_IMAGE,
+  7: LEVEL_7_IMAGE,
+};
+
+/**
+ * Stars display component
+ */
+const StarsDisplay = ({ stars, isLocked }) => {
+  const maxStars = 3;
+  return (
+    <View style={styles.starsContainer}>
+      {[...Array(maxStars)].map((_, i) => (
+        <Text 
+          key={i} 
+          style={[
+            styles.star,
+            i < stars ? styles.starEarned : styles.starEmpty,
+            isLocked && styles.starLocked,
+          ]}
+        >
+          ★
+        </Text>
+      ))}
+    </View>
+  );
 };
 
 /**
@@ -46,6 +73,7 @@ const LevelNode = ({
   isCompleted, 
   isCurrent, 
   isLocked, 
+  stars,
   onPress,
   position,
 }) => {
@@ -121,6 +149,8 @@ const LevelNode = ({
         ]}>
           {level.targetScore} pts
         </Text>
+        {/* Stars display */}
+        <StarsDisplay stars={stars} isLocked={isLocked} />
       </View>
     </TouchableOpacity>
   );
@@ -210,6 +240,7 @@ const CircuitConnection = ({ fromPosition, toPosition, isActive }) => {
 const CareerMap = ({
   currentLevelNumber,
   unlockedLevel,
+  levelStars = {},
   isLoading,
   onSelectLevel,
   onNewGame,
@@ -275,6 +306,7 @@ const CareerMap = ({
                   isCompleted={isCompleted}
                   isCurrent={isCurrent}
                   isLocked={isLocked}
+                  stars={levelStars[level.id] || 0}
                   onPress={handleLevelPress}
                   position={position}
                 />
@@ -473,6 +505,26 @@ const styles = StyleSheet.create({
   },
   textLocked: {
     color: 'rgba(140, 145, 160, 0.7)',
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    marginTop: 4,
+  },
+  star: {
+    fontSize: 14,
+    marginRight: 2,
+  },
+  starEarned: {
+    color: '#FFD700',
+    textShadowColor: 'rgba(255, 215, 0, 0.6)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 4,
+  },
+  starEmpty: {
+    color: 'rgba(100, 110, 120, 0.5)',
+  },
+  starLocked: {
+    color: 'rgba(80, 85, 95, 0.4)',
   },
   connectionContainer: {
     height: 80,

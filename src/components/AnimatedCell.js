@@ -29,6 +29,7 @@ const AnimatedCell = ({
   cellHeight,
   gridSize = GRID_SIZE,
   maxValue = MAX_VALUE,
+  isChallengeColumn = false,
 }) => {
   // Calculate cell size based on gridSize
   const cellSizePercent = 100 / gridSize;
@@ -48,6 +49,22 @@ const AnimatedCell = ({
   const opacityAnim = useSharedValue(1);
   const translateY = useSharedValue(0);
   const pressScale = useSharedValue(1);
+  const challengeGlow = useSharedValue(0);
+
+  // Challenge column glow animation
+  useEffect(() => {
+    if (isChallengeColumn) {
+      challengeGlow.value = withSequence(
+        withTiming(1, { duration: 300 }),
+        withTiming(0.6, { duration: 400 }),
+        withTiming(1, { duration: 400 }),
+        withTiming(0.6, { duration: 400 }),
+        withTiming(0.8, { duration: 300 })
+      );
+    } else {
+      challengeGlow.value = 0;
+    }
+  }, [isChallengeColumn]);
 
   // Press animation when cell is in path - snappy with subtle bounce
   useEffect(() => {
@@ -118,6 +135,7 @@ const AnimatedCell = ({
           { backgroundColor: colorData.border },
           isInPath && styles.cellOuterActive,
           isExceeded && styles.cellOuterExceeded,
+          isChallengeColumn && styles.cellOuterChallenge,
         ]}
       >
         {/* Inner module surface */}
@@ -175,6 +193,14 @@ const styles = StyleSheet.create({
     shadowColor: '#A04040',
     shadowOpacity: 0.5,
     shadowRadius: 5,
+  },
+  cellOuterChallenge: {
+    borderColor: '#FFD700',
+    borderWidth: 2,
+    shadowColor: '#FFD700',
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+    elevation: 10,
   },
   cellInner: {
     flex: 1,

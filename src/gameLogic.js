@@ -219,6 +219,31 @@ export const removeExceededCells = (grid) => {
 };
 
 /**
+ * Check if any column is entirely filled with a specific value
+ * Used for challenge detection (e.g., column of 5s)
+ * @param {number[]} grid - Current grid
+ * @param {number} targetValue - Value to check for
+ * @param {number} gridSize - Size of the grid
+ * @returns {number|null} Column index if found, null otherwise
+ */
+export const checkColumnOfValue = (grid, targetValue, gridSize = GRID_SIZE) => {
+  for (let col = 0; col < gridSize; col++) {
+    let isFullColumn = true;
+    for (let row = 0; row < gridSize; row++) {
+      const index = row * gridSize + col;
+      if (grid[index] !== targetValue) {
+        isFullColumn = false;
+        break;
+      }
+    }
+    if (isFullColumn) {
+      return col; // Return the column index that matches
+    }
+  }
+  return null; // No column found
+};
+
+/**
  * Converts screen coordinates to cell index
  * @param {number} x - X coordinate
  * @param {number} y - Y coordinate

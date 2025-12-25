@@ -24,7 +24,9 @@ import {
   calculateFallDistances,
   hasValidMove,
   getCellFromPosition,
+  checkColumnOfValue,
 } from '../gameLogic';
+import { CHALLENGE_TYPES } from '../careerLevels';
 import {
   calculateBasePoints,
   calculateFinalPoints,
@@ -33,6 +35,7 @@ import {
   getFloatingScoreText,
 } from '../scoreManager';
 import * as Haptics from 'expo-haptics';
+import { playSuccessSound, playErrorSound, playLandingSound } from '../sounds';
 
 /**
  * Custom hook for managing all game state and logic
@@ -71,6 +74,12 @@ const useGameState = (levelConfig = null) => {
   const [gameOver, setGameOver] = useState(false);
   const [levelComplete, setLevelComplete] = useState(false);
   
+  // Challenge state (for star system)
+  const [challengeCompleted, setChallengeCompleted] = useState(false);
+  const [challengeColumn, setChallengeColumn] = useState(null); // Column index when challenge is met
+  const challenge = levelConfig?.challenge || null;
+  const challengeRef = useRef(challenge);
+  
   // Store targetScore in ref for use in callbacks
   const targetScoreRef = useRef(targetScore);
 
@@ -97,7 +106,8 @@ const useGameState = (levelConfig = null) => {
     gridSizeRef.current = gridSize;
     maxValueRef.current = maxValue;
     targetScoreRef.current = targetScore;
-  }, [gridSize, maxValue, targetScore]);
+    challengeRef.current = challenge;
+  }, [gridSize, maxValue, targetScore, challenge]);
   
   // Reset game state when level changes (different level ID)
   useEffect(() => {
@@ -112,6 +122,8 @@ const useGameState = (levelConfig = null) => {
       setStock(initialStock);
       setGameOver(false);
       setLevelComplete(false);
+      setChallengeCompleted(false);
+      setChallengeColumn(null);
       setPath([]);
       pathRef.current = [];
       pathValueRef.current = null;
@@ -192,6 +204,44 @@ const useGameState = (levelConfig = null) => {
   }, []);
 
   /**
+   * Check if challenge is completed on current grid
+   * Only checks if challenge exists and hasn't been completed yet
+   */
+  const challengeCompletedRef = useRef(false);
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    challengeCompletedRef.current = challengeCompleted;
+  }, [challengeCompleted]);
+  
+  const checkChallenge = useCallback((grid) => {
+    const currentChallenge = challengeRef.current;
+    if (!currentChallenge) return;
+    
+    // Skip if already completed
+    if (challengeCompletedRef.current) return;
+    
+    if (currentChallenge.type === CHALLENGE_TYPES.COLUMN_OF_FIVES) {
+      const col = checkColumnOfValue(grid, 5, gridSizeRef.current);
+      if (col !== null) {
+        setChallengeCompleted(true);
+        challengeCompletedRef.current = true;
+        setChallengeColumn(col);
+        // Show celebration for challenge completion
+        setCelebration({ visible: true, text: '⭐ CHALLENGE! ⭐', key: Date.now() });
+        setTimeout(
+          () => setCelebration((prev) => ({ ...prev, visible: false })),
+          ANIMATION.CELEBRATION_DURATION
+        );
+        // Clear column highlight after 1 second
+        setTimeout(() => setChallengeColumn(null), 1000);
+        // Haptic feedback for challenge
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    }
+  }, []);
+
+  /**
    * Adds a cell to the current path if valid
    */
   const addCellToPath = useCallback((cellIndex, currentGridData) => {
@@ -235,6 +285,9 @@ const useGameState = (levelConfig = null) => {
     if (pathLength > pathValue) {
       isResolvingRef.current = true;
       triggerHaptic('validation');
+      
+      // Play success sound on valid path confirmation (before any destruction/gravity)
+      playSuccessSound();
 
       const basePoints = calculateBasePoints(pathLength, currentPath.length);
 
@@ -298,9 +351,16 @@ const useGameState = (levelConfig = null) => {
 
             setTimeout(() => {
               setFallingCells(fallDistances);
+              
+              // Play landing sound when cells start falling
+              playLandingSound();
+              
               setTimeout(() => {
                 setFallingCells({});
                 isResolvingRef.current = false;
+                
+                // Check challenge after gravity settles
+                checkChallenge(newGrid);
 
                 if (!hasValidMove(newGrid, gridSizeRef.current)) {
                   setGameOver(true);
@@ -329,16 +389,22 @@ const useGameState = (levelConfig = null) => {
         showFloatingScore(`+${basePoints}`);
         isResolvingRef.current = false;
 
-        // Check game over (only if level not already complete)
+        // Check challenge and game over
         setGridData((currentGrid) => {
+          // Check challenge after transformation
+          checkChallenge(currentGrid);
+          
           if (!hasValidMove(currentGrid, gridSizeRef.current)) {
             setGameOver(true);
           }
           return currentGrid;
         });
       }
+    } else if (pathLength > 0) {
+      // Path is invalid (too short) - play error sound
+      playErrorSound();
     }
-  }, [combo, triggerHaptic, showFloatingScore, showCelebration]);
+  }, [combo, triggerHaptic, showFloatingScore, showCelebration, checkChallenge]);
 
   /**
    * Restarts the game with fresh state using current level parameters
@@ -351,6 +417,8 @@ const useGameState = (levelConfig = null) => {
     setStock(initialStock);
     setGameOver(false);
     setLevelComplete(false);
+    setChallengeCompleted(false);
+    setChallengeColumn(null);
     setPath([]);
     pathRef.current = [];
     pathValueRef.current = null;
@@ -398,6 +466,8 @@ const useGameState = (levelConfig = null) => {
     stock,
     gameOver,
     levelComplete,
+    challengeCompleted,
+    challengeColumn,
     floatingScore,
     celebration,
     

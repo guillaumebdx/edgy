@@ -19,7 +19,9 @@ import {
   initDatabase, 
   loadCareerProgress, 
   saveCareerProgress, 
-  resetCareerProgress 
+  resetCareerProgress,
+  saveLevelStars,
+  loadAllStars,
 } from '../persistence';
 
 /**
@@ -44,6 +46,9 @@ const useCareerState = () => {
   
   // Whether saved progress exists
   const [hasSavedGame, setHasSavedGame] = useState(false);
+  
+  // Stars per level (map of levelId -> stars count)
+  const [levelStars, setLevelStars] = useState({});
 
   /**
    * Initialize database and load saved progress on mount
@@ -53,6 +58,9 @@ const useCareerState = () => {
       try {
         await initDatabase();
         const progress = await loadCareerProgress();
+        const stars = await loadAllStars();
+        
+        setLevelStars(stars);
         
         if (progress) {
           setCareerLevelNumber(progress.currentLevel);
@@ -94,19 +102,53 @@ const useCareerState = () => {
   }, [getPlayingLevel]);
 
   /**
+   * Calculate stars earned for a level completion
+   * Levels 1-5: 3 stars automatically on completion
+   * Level 6+: 3 stars only if challenge completed, 0 otherwise
+   * @param {Object} level - Level configuration
+   * @param {boolean} challengeCompleted - Whether challenge was completed
+   * @returns {number} Stars earned (0 or 3)
+   */
+  const calculateStars = useCallback((level, challengeCompleted) => {
+    if (!level) return 0;
+    
+    // Levels 1-5: auto 3 stars on completion
+    if (!level.challenge) {
+      return 3;
+    }
+    
+    // Levels with challenges: 3 stars only if challenge completed
+    return challengeCompleted ? 3 : 0;
+  }, []);
+
+  /**
    * Process end of run and determine result
    * Does NOT advance level - just returns the result
    * Level advancement happens via advanceToNextLevel when user clicks "Next"
    * Only advances career if playing level >= career level (not replaying old levels)
    * @param {number} finalScore - Score achieved in the run
-   * @returns {Object} Result with success status
+   * @param {boolean} challengeCompleted - Whether challenge was completed during run
+   * @returns {Object} Result with success status and stars
    */
-  const processRunEnd = useCallback((finalScore) => {
+  const processRunEnd = useCallback(async (finalScore, challengeCompleted = false) => {
     const level = getPlayingLevel();
     const success = isLevelCompleted(finalScore);
     const isReplayingOldLevel = playingLevelNumber < careerLevelNumber;
     
     if (success) {
+      // Calculate stars earned
+      const starsEarned = calculateStars(level, challengeCompleted);
+      
+      // Save stars if earned (will only update if higher than existing)
+      if (starsEarned > 0) {
+        await saveLevelStars(playingLevelNumber, starsEarned);
+        // Update local state
+        setLevelStars(prev => ({
+          ...prev,
+          [playingLevelNumber]: Math.max(prev[playingLevelNumber] || 0, starsEarned)
+        }));
+      }
+      
       if (isReplayingOldLevel) {
         // Replaying old level - no career progression
         return {
@@ -116,6 +158,7 @@ const useCareerState = () => {
           message: `Niveau ${playingLevelNumber} terminé !`,
           completedLevel: playingLevelNumber,
           isReplay: true,
+          starsEarned,
         };
       }
       
@@ -129,9 +172,10 @@ const useCareerState = () => {
         message: `Niveau ${playingLevelNumber} terminé !`,
         completedLevel: playingLevelNumber,
         isReplay: false,
+        starsEarned,
       };
     } else {
-      // Retry same level
+      // Retry same level - no stars
       return {
         success: false,
         careerCompleted: false,
@@ -139,9 +183,10 @@ const useCareerState = () => {
         message: `Score insuffisant. Objectif : ${level.targetScore}`,
         completedLevel: null,
         isReplay: isReplayingOldLevel,
+        starsEarned: 0,
       };
     }
-  }, [playingLevelNumber, careerLevelNumber, getPlayingLevel, isLevelCompleted]);
+  }, [playingLevelNumber, careerLevelNumber, getPlayingLevel, isLevelCompleted, calculateStars]);
 
   /**
    * Advance to next level after user confirms
@@ -220,6 +265,7 @@ const useCareerState = () => {
     totalLevels: getTotalLevels(),
     isLoading,
     hasSavedGame,
+    levelStars, // Map of levelId -> stars count
     
     // State - currently playing (not persisted until level complete)
     playingLevelNumber,

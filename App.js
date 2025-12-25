@@ -34,6 +34,7 @@ import {
 } from './src/components';
 import { getLevelConfig } from './src/careerLevels';
 import { useGameState, useCareerState } from './src/hooks';
+import { initSounds, unloadSounds, startBackgroundMusic, stopBackgroundMusic } from './src/sounds';
 
 // App screens
 const SCREENS = {
@@ -50,6 +51,28 @@ export default function App() {
   // Current screen state
   const [currentScreen, setCurrentScreen] = useState(SCREENS.MENU);
 
+  // Initialize sounds on mount and start music if on menu
+  useEffect(() => {
+    const init = async () => {
+      await initSounds();
+      // Start music on initial load if on menu screen
+      if (currentScreen === SCREENS.MENU) {
+        startBackgroundMusic();
+      }
+    };
+    init();
+    return () => unloadSounds();
+  }, []);
+
+  // Control background music based on current screen (after initial load)
+  useEffect(() => {
+    if (currentScreen === SCREENS.MENU) {
+      startBackgroundMusic();
+    } else {
+      stopBackgroundMusic();
+    }
+  }, [currentScreen]);
+
   // Career state management
   const {
     careerLevelNumber,
@@ -57,6 +80,7 @@ export default function App() {
     totalLevels,
     isLoading,
     hasSavedGame,
+    levelStars,
     playingLevelNumber,
     playingLevel,
     processRunEnd,
@@ -82,6 +106,8 @@ export default function App() {
     stock,
     gameOver,
     levelComplete,
+    challengeCompleted,
+    challengeColumn,
     floatingScore,
     celebration,
     gridSize,
@@ -127,10 +153,10 @@ export default function App() {
    * Handle game over - process level completion
    * Uses levelComplete from useGameState (set when target score is reached)
    */
-  const handleGameOver = useCallback(() => {
+  const handleGameOver = useCallback(async () => {
     if (levelComplete) {
-      // Target score reached - process as success
-      const result = processRunEnd(score);
+      // Target score reached - process as success with challenge status
+      const result = await processRunEnd(score, challengeCompleted);
       result.targetScore = playingLevel?.targetScore;
       setLevelResult(result);
     } else {
@@ -140,9 +166,10 @@ export default function App() {
         careerCompleted: false,
         message: 'Score insuffisant',
         targetScore: playingLevel?.targetScore,
+        starsEarned: 0,
       });
     }
-  }, [score, levelComplete, processRunEnd, playingLevel]);
+  }, [score, levelComplete, challengeCompleted, processRunEnd, playingLevel]);
 
   /**
    * Restart current level
@@ -193,6 +220,7 @@ export default function App() {
         <CareerMap
           currentLevelNumber={careerLevelNumber}
           unlockedLevel={unlockedLevel}
+          levelStars={levelStars}
           isLoading={isLoading}
           onSelectLevel={handleSelectLevel}
           onNewGame={handleNewGame}
@@ -226,6 +254,8 @@ export default function App() {
           maxValue={maxValue}
           stock={playingLevel.stock}
           totalLevels={totalLevels}
+          challenge={playingLevel.challenge}
+          challengeCompleted={challengeCompleted}
         />
       )}
 
@@ -262,6 +292,8 @@ export default function App() {
               const fallDistance = fallingCells[index] || 0;
               const col = index % gridSize;
 
+              const isChallengeColumn = challengeColumn !== null && col === challengeColumn;
+
               return (
                 <AnimatedCell
                   key={index}
@@ -277,6 +309,7 @@ export default function App() {
                   cellHeight={gridLayout.cellHeight}
                   gridSize={gridSize}
                   maxValue={maxValue}
+                  isChallengeColumn={isChallengeColumn}
                 />
               );
             })}

@@ -6,7 +6,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-const LevelInfo = ({ levelNumber, levelName, targetScore, maxValue, stock, totalLevels }) => {
+const LevelInfo = ({ levelNumber, levelName, targetScore, maxValue, stock, totalLevels, challenge, challengeCompleted }) => {
   return (
     <View style={styles.container}>
       <View style={styles.levelBadge}>
@@ -22,6 +22,18 @@ const LevelInfo = ({ levelNumber, levelName, targetScore, maxValue, stock, total
           <Text style={styles.statSeparator}>•</Text>
           <Text style={styles.statText}>Stock: {stock}</Text>
         </View>
+        {challenge && (
+          <View style={styles.challengeRow}>
+            <Text style={[
+              styles.challengeText,
+              challengeCompleted && styles.challengeCompleted
+            ]}>
+              {challengeCompleted ? '⭐ ' : '☆ '}
+              {challenge.description}
+              {challengeCompleted ? ' ✓' : ''}
+            </Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -80,6 +92,20 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: 'rgba(255, 255, 255, 0.3)',
     marginHorizontal: 6,
+  },
+  challengeRow: {
+    marginTop: 4,
+  },
+  challengeText: {
+    fontSize: 10,
+    fontFamily: 'monospace',
+    color: 'rgba(255, 200, 100, 0.8)',
+  },
+  challengeCompleted: {
+    color: '#FFD700',
+    textShadowColor: 'rgba(255, 215, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 4,
   },
 });
 
