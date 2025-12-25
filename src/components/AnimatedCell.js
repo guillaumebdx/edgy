@@ -14,7 +14,7 @@ import Animated, {
   withDelay,
   Easing,
 } from 'react-native-reanimated';
-import { GRID_SIZE, MAX_VALUE, COLOR_MAP, ANIMATION } from '../constants';
+import { GRID_SIZE, MAX_VALUE, COLOR_MAP, ANIMATION, NEUTRAL_COLOR } from '../constants';
 
 const AnimatedCell = ({
   value,
@@ -30,6 +30,9 @@ const AnimatedCell = ({
   gridSize = GRID_SIZE,
   maxValue = MAX_VALUE,
   isChallengeColumn = false,
+  // Entry animation props
+  entryPhase = 'ready', // 'falling' | 'revealing' | 'ready'
+  entryDelay = 0,
 }) => {
   // Calculate cell size based on gridSize
   const cellSizePercent = 100 / gridSize;
@@ -50,6 +53,42 @@ const AnimatedCell = ({
   const translateY = useSharedValue(0);
   const pressScale = useSharedValue(1);
   const challengeGlow = useSharedValue(0);
+  
+  // Entry animation shared values
+  const entryTranslateY = useSharedValue(entryPhase === 'falling' ? -400 : 0);
+  const entryReveal = useSharedValue(entryPhase === 'ready' ? 1 : 0);
+  const entryScale = useSharedValue(entryPhase === 'ready' ? 1 : 0.9);
+
+  // Entry fall animation
+  useEffect(() => {
+    if (entryPhase === 'falling') {
+      entryTranslateY.value = -400;
+      entryReveal.value = 0;
+      entryScale.value = 0.9;
+      entryTranslateY.value = withDelay(
+        entryDelay,
+        withSpring(0, {
+          damping: 12,
+          stiffness: 200,
+          mass: 0.8,
+        })
+      );
+    } else if (entryPhase === 'revealing') {
+      entryTranslateY.value = 0;
+      entryReveal.value = withDelay(
+        entryDelay,
+        withTiming(1, { duration: ANIMATION.ENTRY_REVEAL_DURATION, easing: Easing.out(Easing.ease) })
+      );
+      entryScale.value = withDelay(
+        entryDelay,
+        withSpring(1, { damping: 15, stiffness: 300 })
+      );
+    } else if (entryPhase === 'ready') {
+      entryTranslateY.value = 0;
+      entryReveal.value = 1;
+      entryScale.value = 1;
+    }
+  }, [entryPhase, entryDelay]);
 
   // Challenge column glow animation
   useEffect(() => {
@@ -113,11 +152,16 @@ const AnimatedCell = ({
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: shakeAnim.value },
-      { translateY: translateY.value },
-      { scale: scaleAnim.value * pressScale.value },
+      { translateY: translateY.value + entryTranslateY.value },
+      { scale: scaleAnim.value * pressScale.value * entryScale.value },
     ],
     opacity: opacityAnim.value,
   }));
+  
+  // Determine colors based on entry phase
+  const isRevealed = entryPhase === 'ready' || entryPhase === 'revealing';
+  const currentColor = isRevealed ? colorData : NEUTRAL_COLOR;
+  const showValue = entryPhase === 'ready' || entryPhase === 'revealing';
 
   // Dynamic cell style
   const cellStyle = {
@@ -132,24 +176,26 @@ const AnimatedCell = ({
       <View
         style={[
           styles.cellOuter,
-          { backgroundColor: colorData.border },
+          { backgroundColor: currentColor.border },
           isInPath && styles.cellOuterActive,
           isExceeded && styles.cellOuterExceeded,
           isChallengeColumn && styles.cellOuterChallenge,
         ]}
       >
         {/* Inner module surface */}
-        <View style={[styles.cellInner, { backgroundColor: colorData.base }]}>
+        <View style={[styles.cellInner, { backgroundColor: currentColor.base }]}>
           {/* Subtle top gradient for depth */}
-          <View style={[styles.cellGradientTop, { backgroundColor: colorData.top }]} />
+          <View style={[styles.cellGradientTop, { backgroundColor: currentColor.top }]} />
           
           {/* Cell value - technical typography */}
-          <Text style={[styles.cellText, isExceeded && styles.cellTextExceeded]}>
-            {value > MAX_VALUE ? `${value}` : value}
-          </Text>
+          {showValue && (
+            <Text style={[styles.cellText, isExceeded && styles.cellTextExceeded]}>
+              {value > MAX_VALUE ? `${value}` : value}
+            </Text>
+          )}
           
           {/* Subtle bottom gradient for depth */}
-          <View style={[styles.cellGradientBottom, { backgroundColor: colorData.bottom }]} />
+          <View style={[styles.cellGradientBottom, { backgroundColor: currentColor.bottom }]} />
         </View>
       </View>
       

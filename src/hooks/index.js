@@ -6,3 +6,4 @@
 export { default as useGameState } from './useGameState';
 export { default as useCareerState } from './useCareerState';
 export { default as useTutorialState } from './useTutorialState';
+export { default as useLevelEntryAnimation } from './useLevelEntryAnimation';

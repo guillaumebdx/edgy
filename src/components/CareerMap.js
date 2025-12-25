@@ -6,7 +6,7 @@
  * Vertical scrolling navigation through career progression
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,8 @@ import {
   Alert,
 } from 'react-native';
 import { CAREER_LEVELS } from '../careerLevels';
+import SettingsMenu from './SettingsMenu';
+import { loadSoundPreference, setSoundEnabled, isSoundEnabled } from '../sounds';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -248,6 +250,25 @@ const CareerMap = ({
   onSelectLevel,
   onNewGame,
 }) => {
+  // Settings menu state
+  const [showSettings, setShowSettings] = useState(false);
+  const [soundEnabled, setSoundEnabledState] = useState(true);
+
+  // Load sound preference on mount
+  useEffect(() => {
+    const loadPreference = async () => {
+      const enabled = await loadSoundPreference();
+      setSoundEnabledState(enabled);
+    };
+    loadPreference();
+  }, []);
+
+  const handleToggleSound = async () => {
+    const newValue = !soundEnabled;
+    setSoundEnabledState(newValue);
+    await setSoundEnabled(newValue);
+  };
+
   // Hidden reset feature - 5 taps on title
   const [tapCount, setTapCount] = useState(0);
   const tapTimeoutRef = useRef(null);
@@ -311,11 +332,28 @@ const CareerMap = ({
     >
       {/* Header - tap EDGY 5 times to reset */}
       <View style={styles.header}>
+        {/* Settings button */}
+        <TouchableOpacity 
+          style={styles.settingsButton} 
+          onPress={() => setShowSettings(true)}
+        >
+          <Text style={styles.settingsIcon}>⚙️</Text>
+        </TouchableOpacity>
+        
         <TouchableOpacity onPress={handleTitleTap} activeOpacity={0.8}>
           <Text style={styles.title}>EDGY</Text>
         </TouchableOpacity>
         <Text style={styles.subtitle}>CIRCUIT</Text>
       </View>
+
+      {/* Settings Menu */}
+      <SettingsMenu
+        visible={showSettings}
+        onClose={() => setShowSettings(false)}
+        soundEnabled={soundEnabled}
+        onToggleSound={handleToggleSound}
+        onResetProgress={onNewGame}
+      />
 
       {/* Scrollable map */}
       <ScrollView
@@ -400,6 +438,16 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.5)',
     letterSpacing: 12,
     marginTop: -2,
+  },
+  settingsButton: {
+    position: 'absolute',
+    top: 55,
+    right: 20,
+    padding: 8,
+    zIndex: 10,
+  },
+  settingsIcon: {
+    fontSize: 24,
   },
   scrollView: {
     flex: 1,

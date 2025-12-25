@@ -38,6 +38,19 @@ export const ANIMATION = {
   FALL_ANIMATION_DURATION: 400,
   FLOATING_TEXT_DURATION: 1000,
   CELEBRATION_DURATION: 900,
+  // Level entry animation
+  ENTRY_FALL_DURATION: 400,
+  ENTRY_FALL_DELAY_PER_CELL: 20,
+  ENTRY_REVEAL_DURATION: 250,
+  ENTRY_REVEAL_DELAY: 50,
+};
+
+// Neutral color for entry animation (before reveal)
+export const NEUTRAL_COLOR = {
+  base: '#2A3438',
+  top: '#343E42',
+  bottom: '#222A2E',
+  border: '#1A2024',
 };
 
 // Celebration trigger thresholds

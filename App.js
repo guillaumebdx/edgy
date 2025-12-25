@@ -34,8 +34,8 @@ import {
   TutorialOverlay,
 } from './src/components';
 import { getLevelConfig } from './src/careerLevels';
-import { useGameState, useCareerState, useTutorialState } from './src/hooks';
-import { initSounds, unloadSounds, startBackgroundMusic, stopBackgroundMusic } from './src/sounds';
+import { useGameState, useCareerState, useTutorialState, useLevelEntryAnimation } from './src/hooks';
+import { initSounds, unloadSounds, startBackgroundMusic, stopBackgroundMusic, playLandingSound } from './src/sounds';
 
 // App screens
 const SCREENS = {
@@ -125,6 +125,15 @@ export default function App() {
     restartGame,
   } = useGameState(playingLevel, tutorialState);
 
+  // Level entry animation
+  const isGameScreen = currentScreen === SCREENS.GAME;
+  const {
+    phase: entryPhase,
+    isAnimating: isEntryAnimating,
+    getEntryDelay,
+    getRevealDelay,
+  } = useLevelEntryAnimation(gridSize, playingLevel?.id, isGameScreen, playLandingSound);
+
   /**
    * Handle level selection from career map
    * @param {number} levelNumber - Selected level number
@@ -202,19 +211,35 @@ export default function App() {
     }
   }, [gameOver, levelResult, handleGameOver, currentScreen]);
 
+  // Wrapped gesture handlers that block during entry animation
+  const wrappedGestureBegin = useCallback((x, y) => {
+    if (isEntryAnimating) return;
+    handleGestureBegin(x, y);
+  }, [isEntryAnimating, handleGestureBegin]);
+
+  const wrappedGestureUpdate = useCallback((x, y) => {
+    if (isEntryAnimating) return;
+    handleGestureUpdate(x, y);
+  }, [isEntryAnimating, handleGestureUpdate]);
+
+  const wrappedGestureEnd = useCallback(() => {
+    if (isEntryAnimating) return;
+    handleGestureEnd();
+  }, [isEntryAnimating, handleGestureEnd]);
+
   // Configure pan gesture for path drawing
   const panGesture = Gesture.Pan()
     .onBegin((e) => {
       'worklet';
-      runOnJS(handleGestureBegin)(e.x, e.y);
+      runOnJS(wrappedGestureBegin)(e.x, e.y);
     })
     .onUpdate((e) => {
       'worklet';
-      runOnJS(handleGestureUpdate)(e.x, e.y);
+      runOnJS(wrappedGestureUpdate)(e.x, e.y);
     })
     .onEnd(() => {
       'worklet';
-      runOnJS(handleGestureEnd)();
+      runOnJS(wrappedGestureEnd)();
     })
     .minDistance(0);
 
@@ -300,12 +325,19 @@ export default function App() {
 
               const isChallengeColumn = challengeColumn !== null && col === challengeColumn;
 
+              // Entry animation delay based on phase
+              const entryDelay = entryPhase === 'falling' 
+                ? getEntryDelay(index) 
+                : entryPhase === 'revealing' 
+                  ? getRevealDelay(index) 
+                  : 0;
+
               return (
                 <AnimatedCell
                   key={index}
                   value={value}
                   index={index}
-                  isInPath={isInPath}
+                  isInPath={isEntryAnimating ? false : isInPath}
                   pathIndex={pathIndex}
                   isExceeded={isExceeded}
                   isShaking={isShaking}
@@ -316,6 +348,8 @@ export default function App() {
                   gridSize={gridSize}
                   maxValue={maxValue}
                   isChallengeColumn={isChallengeColumn}
+                  entryPhase={entryPhase}
+                  entryDelay={entryDelay}
                 />
               );
             })}

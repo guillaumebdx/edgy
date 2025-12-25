@@ -7,12 +7,53 @@
  */
 
 import { Audio } from 'expo-av';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Sound instances (reusable)
 let successSound = null;
 let errorSound = null;
 let landingSound = null;
 let backgroundMusic = null;
+
+// Global mute state
+let isMuted = false;
+const SOUND_ENABLED_KEY = '@edgy_sound_enabled';
+
+/**
+ * Load sound preference from storage
+ */
+export const loadSoundPreference = async () => {
+  try {
+    const value = await AsyncStorage.getItem(SOUND_ENABLED_KEY);
+    isMuted = value === 'false';
+    return !isMuted;
+  } catch (error) {
+    console.warn('Failed to load sound preference:', error);
+    return true;
+  }
+};
+
+/**
+ * Save sound preference to storage
+ */
+export const setSoundEnabled = async (enabled) => {
+  try {
+    isMuted = !enabled;
+    await AsyncStorage.setItem(SOUND_ENABLED_KEY, enabled ? 'true' : 'false');
+    
+    // Stop music immediately if muting
+    if (isMuted && backgroundMusic) {
+      await stopBackgroundMusic();
+    }
+  } catch (error) {
+    console.warn('Failed to save sound preference:', error);
+  }
+};
+
+/**
+ * Get current sound enabled state
+ */
+export const isSoundEnabled = () => !isMuted;
 
 /**
  * Initialize sounds
@@ -64,7 +105,7 @@ export const initSounds = async () => {
  * Called once per valid path, before destruction/gravity
  */
 export const playSuccessSound = async () => {
-  if (!successSound) return;
+  if (!successSound || isMuted) return;
   
   try {
     await successSound.setPositionAsync(0);
@@ -79,7 +120,7 @@ export const playSuccessSound = async () => {
  * Called when path is too short or invalid
  */
 export const playErrorSound = async () => {
-  if (!errorSound) return;
+  if (!errorSound || isMuted) return;
   
   try {
     await errorSound.setPositionAsync(0);
@@ -94,7 +135,7 @@ export const playErrorSound = async () => {
  * Called when gravity completes and cells arrive
  */
 export const playLandingSound = async () => {
-  if (!landingSound) return;
+  if (!landingSound || isMuted) return;
   
   try {
     await landingSound.setPositionAsync(0);
@@ -110,7 +151,7 @@ export const playLandingSound = async () => {
  * Checks if already playing to avoid multiple instances
  */
 export const startBackgroundMusic = async () => {
-  if (!backgroundMusic) return;
+  if (!backgroundMusic || isMuted) return;
   
   try {
     const status = await backgroundMusic.getStatusAsync();
