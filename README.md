@@ -10,8 +10,10 @@ Tracez des chemins sur une grille de circuit logique, fusionnez les modules et d
 
 ## Aperçu
 
-- **Mode Carrière** avec 5 niveaux progressifs
-- Grilles de **4×4 à 6×6** selon le niveau
+- **Mode Carrière** avec 7 niveaux progressifs
+- Grilles de **4×4 à 7×7** selon le niveau
+- **Système d'étoiles** — jusqu'à 3 étoiles par niveau avec challenges
+- **Effets sonores** — sons de validation, erreur, chute et musique de fond
 - Thème visuel **Circuit / Logique** — les cases ressemblent à des composants électroniques
 - **Carte de carrière** interactive avec composants électroniques (LED, résistance, transistor...)
 - **Persistance SQLite** — reprenez votre progression après fermeture de l'app
@@ -22,15 +24,17 @@ Tracez des chemins sur une grille de circuit logique, fusionnez les modules et d
 
 ## Mode Carrière
 
-### 5 Niveaux progressifs
+### 7 Niveaux progressifs
 
-| Niveau | Nom | Grille | Max | Stock | Objectif |
-|--------|-----|--------|-----|-------|----------|
-| 1 | Initiation | 4×4 | 3 | 30 | 200 pts |
-| 2 | Circuits simples | 5×5 | 4 | 40 | 500 pts |
-| 3 | Logique avancée | 6×6 | 4 | 45 | 1000 pts |
-| 4 | Haute tension | 6×6 | 5 | 50 | 2000 pts |
-| 5 | Maître du circuit | 6×6 | 5 | 40 | 3500 pts |
+| Niveau | Nom | Grille | Max | Stock | Objectif | Challenge |
+|--------|-----|--------|-----|-------|----------|----------|
+| 1 | Initiation | 4×4 | 3 | 30 | 200 pts | - |
+| 2 | Circuits simples | 5×5 | 4 | 40 | 500 pts | - |
+| 3 | Logique avancée | 6×6 | 4 | 45 | 1000 pts | - |
+| 4 | Haute tension | 6×6 | 5 | 50 | 2000 pts | - |
+| 5 | Maître du circuit | 6×6 | 5 | 40 | 3500 pts | - |
+| 6 | Colonne parfaite | 6×6 | 5 | 45 | 4000 pts | Colonne de 5 |
+| 7 | Signal fort | 7×7 | 5 | 55 | 5500 pts | Colonne de 5 |
 
 ### Progression
 - Atteignez le **score cible** pour débloquer le niveau suivant
@@ -38,11 +42,24 @@ Tracez des chemins sur une grille de circuit logique, fusionnez les modules et d
 - Rejouez les niveaux précédents sans affecter votre progression
 - Votre avancement est **sauvegardé automatiquement** en SQLite
 
+### Système d'étoiles
+- Chaque niveau peut rapporter jusqu'à **3 étoiles**
+- **Niveaux 1-5** : 3 étoiles automatiques à la complétion
+- **Niveaux 6+** : 3 étoiles uniquement si le **challenge** est réussi
+- Les étoiles sont **persistantes** — une fois obtenues, elles restent
+- Affichage des étoiles sur la **carte de carrière**
+
+### Challenges
+- **Colonne de 5** : Aligner une colonne complète de cases de valeur 5
+- Animation dorée sur la colonne réussie
+- Feedback haptique et célébration visuelle
+
 ### Carte de carrière
 - Menu principal sous forme de **circuit imprimé stylisé**
 - Chaque niveau représenté par un **composant électronique** unique
 - Connexions visuelles entre les niveaux (traces de circuit)
 - États visuels : complété (✓), courant (point lumineux), verrouillé (grisé)
+- **Étoiles** affichées sous chaque niveau (★★★)
 
 ---
 
@@ -127,6 +144,7 @@ Scannez le QR code avec **Expo Go** sur votre téléphone, ou :
 - **react-native-reanimated** — Animations performantes
 - **expo-haptics** — Retour haptique
 - **expo-sqlite** — Persistance locale de la progression
+- **expo-av** — Audio (musique de fond, effets sonores)
 
 ---
 
@@ -142,12 +160,16 @@ edgy-grid/
 │   ├── resistance.png          # Composant niveau 2
 │   ├── transistor.png          # Composant niveau 3
 │   ├── 2branches.png           # Composant niveau 4
-│   └── 3branches.png           # Composant niveau 5
+│   ├── 3branches.png           # Composant niveau 5
+│   ├── pile.png                # Composant niveau 6
+│   ├── wifi.png                # Composant niveau 7
+│   └── sounds/                 # Effets sonores et musique
 └── src/
     ├── constants.js            # Configuration (grille, couleurs, seuils)
-    ├── gameLogic.js            # Logique de jeu (grille, validation, gravité)
+    ├── gameLogic.js            # Logique de jeu (grille, validation, gravité, challenges)
     ├── scoreManager.js         # Calcul du score, combos, célébrations
-    ├── careerLevels.js         # Définition des 5 niveaux de carrière
+    ├── careerLevels.js         # Définition des 7 niveaux de carrière
+    ├── sounds.js               # Gestion audio (musique, effets sonores)
     ├── styles.js               # Styles globaux
     ├── utils.js                # Fonctions utilitaires
     ├── components/
@@ -163,7 +185,7 @@ edgy-grid/
     │   ├── useCareerState.js   # Gestion progression carrière
     │   └── index.js            # Exports
     └── persistence/
-        ├── careerStorage.js    # API SQLite pour sauvegarde
+        ├── careerStorage.js    # API SQLite pour sauvegarde (progression + étoiles)
         └── index.js            # Exports
 ```
 
@@ -171,8 +193,9 @@ edgy-grid/
 - **constants.js** : configuration centralisée
 - **gameLogic.js** : règles du jeu, aucune dépendance React
 - **scoreManager.js** : calculs de score isolés
-- **careerLevels.js** : définition statique des niveaux
-- **useGameState.js** : état React du jeu en cours
+- **careerLevels.js** : définition statique des niveaux + challenges
+- **sounds.js** : gestion audio centralisée
+- **useGameState.js** : état React du jeu en cours + détection challenges
 - **useCareerState.js** : progression carrière + persistance SQLite
 - **persistence/** : couche d'accès SQLite isolée
 - **components/** : UI pure avec animations
