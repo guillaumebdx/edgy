@@ -3,10 +3,70 @@
  * Displays current level information in career mode
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
-const LevelInfo = ({ levelNumber, levelName, targetScore, maxValue, stock, totalLevels, challenge, challengeCompleted }) => {
+const LevelInfo = ({ 
+  levelNumber, 
+  levelName, 
+  targetScore, 
+  maxValue, 
+  stock, 
+  totalLevels, 
+  challenge, 
+  challengeCompleted,
+  isTutorialLastStep = false,
+  highlightMax = false,
+}) => {
+  // Blinking animation for tutorial highlights
+  const blinkOpacity = useSharedValue(1);
+  const maxBlinkOpacity = useSharedValue(1);
+  
+  useEffect(() => {
+    if (isTutorialLastStep) {
+      blinkOpacity.value = withRepeat(
+        withSequence(
+          withTiming(0.4, { duration: 400 }),
+          withTiming(1, { duration: 400 })
+        ),
+        -1, // infinite
+        false
+      );
+    } else {
+      blinkOpacity.value = 1;
+    }
+  }, [isTutorialLastStep]);
+  
+  useEffect(() => {
+    if (highlightMax) {
+      maxBlinkOpacity.value = withRepeat(
+        withSequence(
+          withTiming(0.4, { duration: 400 }),
+          withTiming(1, { duration: 400 })
+        ),
+        -1, // infinite
+        false
+      );
+    } else {
+      maxBlinkOpacity.value = 1;
+    }
+  }, [highlightMax]);
+  
+  const blinkStyle = useAnimatedStyle(() => ({
+    opacity: blinkOpacity.value,
+  }));
+  
+  const maxBlinkStyle = useAnimatedStyle(() => ({
+    opacity: maxBlinkOpacity.value,
+  }));
+
   return (
     <View style={styles.container}>
       <View style={styles.levelBadge}>
@@ -16,9 +76,21 @@ const LevelInfo = ({ levelNumber, levelName, targetScore, maxValue, stock, total
       <View style={styles.infoContainer}>
         <Text style={styles.levelName}>{levelName}</Text>
         <View style={styles.statsRow}>
-          <Text style={styles.statText}>Objectif: {targetScore.toLocaleString()}</Text>
+          <Animated.Text style={[
+            styles.statText,
+            isTutorialLastStep && styles.objectifHighlight,
+            isTutorialLastStep && blinkStyle,
+          ]}>
+            Objectif: {targetScore.toLocaleString()}
+          </Animated.Text>
           <Text style={styles.statSeparator}>•</Text>
-          <Text style={styles.statText}>MAX: {maxValue}</Text>
+          <Animated.Text style={[
+            styles.statText,
+            highlightMax && styles.maxHighlight,
+            highlightMax && maxBlinkStyle,
+          ]}>
+            MAX: {maxValue}
+          </Animated.Text>
           <Text style={styles.statSeparator}>•</Text>
           <Text style={styles.statText}>Stock: {stock}</Text>
         </View>
@@ -84,12 +156,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statText: {
-    fontSize: 10,
+    fontSize: 13,
     fontFamily: 'monospace',
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: 'rgba(255, 255, 255, 0.6)',
+  },
+  objectifHighlight: {
+    color: '#70D0B0',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  maxHighlight: {
+    color: '#FF6B6B',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   statSeparator: {
-    fontSize: 10,
+    fontSize: 13,
     color: 'rgba(255, 255, 255, 0.3)',
     marginHorizontal: 6,
   },

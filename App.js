@@ -18,7 +18,14 @@ import { useState, useCallback, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, ImageBackground, TouchableOpacity } from 'react-native';
 import { GestureHandlerRootView, GestureDetector, Gesture } from 'react-native-gesture-handler';
-import { runOnJS } from 'react-native-reanimated';
+import Animated, { 
+  runOnJS, 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withRepeat, 
+  withSequence, 
+  withTiming 
+} from 'react-native-reanimated';
 
 // Module imports
 import { ANIMATION } from './src/constants';
@@ -89,6 +96,7 @@ export default function App() {
     resetCareer,
     continueCareer,
     selectLevel,
+    debugSetLevel,
   } = useCareerState();
 
   // Level result state for game over screen
@@ -134,6 +142,29 @@ export default function App() {
     getRevealDelay,
   } = useLevelEntryAnimation(gridSize, playingLevel?.id, isGameScreen, playLandingSound);
 
+  // Score blinking animation for tutorial last step
+  const scoreBlinkOpacity = useSharedValue(1);
+  const shouldBlinkScore = isTutorialLevel && tutorialState.isLastStep;
+  
+  useEffect(() => {
+    if (shouldBlinkScore) {
+      scoreBlinkOpacity.value = withRepeat(
+        withSequence(
+          withTiming(0.4, { duration: 400 }),
+          withTiming(1, { duration: 400 })
+        ),
+        -1,
+        false
+      );
+    } else {
+      scoreBlinkOpacity.value = 1;
+    }
+  }, [shouldBlinkScore]);
+  
+  const scoreBlinkStyle = useAnimatedStyle(() => ({
+    opacity: scoreBlinkOpacity.value,
+  }));
+
   /**
    * Handle level selection from career map
    * @param {number} levelNumber - Selected level number
@@ -156,10 +187,13 @@ export default function App() {
   }, [resetCareer]);
 
   /**
-   * Handle "Back to Menu" from game
-   * Does not save progress - only saves on level completion
+   * Return to career map menu
+   * If level was completed (levelResult.success), progress is already saved
    */
-  const handleBackToMenu = useCallback(() => {
+  const handleBackToMenu = useCallback(async () => {
+    // If level was completed but user clicks Menu instead of Next Level,
+    // we need to ensure progress was saved (it should already be via handleGameOver)
+    // Just clear state and go back to menu
     setLevelResult(null);
     setCurrentScreen(SCREENS.MENU);
   }, []);
@@ -255,6 +289,7 @@ export default function App() {
           isLoading={isLoading}
           onSelectLevel={handleSelectLevel}
           onNewGame={handleNewGame}
+          onDebugSetLevel={debugSetLevel}
         />
       </GestureHandlerRootView>
     );
@@ -287,13 +322,21 @@ export default function App() {
           totalLevels={totalLevels}
           challenge={playingLevel.challenge}
           challengeCompleted={challengeCompleted}
+          isTutorialLastStep={isTutorialLevel && tutorialState.isLastStep}
+          highlightMax={isTutorialLevel && tutorialState.currentStep?.highlightMax}
         />
       )}
 
       {/* Header: Score and Stock display */}
       <View style={styles.headerContainer}>
         <View style={styles.scoreContainer}>
-          <Text style={styles.scoreText}>{score.toLocaleString()}</Text>
+          <Animated.Text style={[
+            styles.scoreText,
+            shouldBlinkScore && { color: '#70D0B0' },
+            shouldBlinkScore && scoreBlinkStyle,
+          ]}>
+            {score.toLocaleString()}
+          </Animated.Text>
           {combo > 1 && <Text style={styles.comboText}>x{combo}</Text>}
         </View>
         <View style={styles.stockContainer}>

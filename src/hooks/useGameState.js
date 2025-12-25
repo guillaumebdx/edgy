@@ -35,7 +35,7 @@ import {
   getFloatingScoreText,
 } from '../scoreManager';
 import * as Haptics from 'expo-haptics';
-import { playSuccessSound, playErrorSound, playLandingSound } from '../sounds';
+import { playSuccessSound, playErrorSound, playLandingSound, playChallengeSound } from '../sounds';
 
 /**
  * Custom hook for managing all game state and logic
@@ -243,6 +243,8 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
         setTimeout(() => setChallengeColumn(null), 1000);
         // Haptic feedback for challenge
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        // Play challenge success sound
+        playChallengeSound();
       }
     }
   }, []);

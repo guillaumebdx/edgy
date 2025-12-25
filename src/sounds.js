@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 let successSound = null;
 let errorSound = null;
 let landingSound = null;
+let challengeSound = null;
 let backgroundMusic = null;
 
 // Global mute state
@@ -89,6 +90,13 @@ export const initSounds = async () => {
     );
     landingSound = landing;
 
+    // Preload challenge success sound
+    const { sound: challenge } = await Audio.Sound.createAsync(
+      require('../assets/sounds/challenge.wav'),
+      { volume: 0.5 } // Higher volume for challenge success
+    );
+    challengeSound = challenge;
+
     // Preload background music (looped, menu only)
     const { sound: music } = await Audio.Sound.createAsync(
       require('../assets/sounds/background-music.mp3'),
@@ -146,6 +154,21 @@ export const playLandingSound = async () => {
 };
 
 /**
+ * Play challenge success sound
+ * Called when a challenge is completed (e.g., column of 5s)
+ */
+export const playChallengeSound = async () => {
+  if (!challengeSound || isMuted) return;
+  
+  try {
+    await challengeSound.setPositionAsync(0);
+    await challengeSound.playAsync();
+  } catch (error) {
+    console.warn('Failed to play challenge sound:', error);
+  }
+};
+
+/**
  * Start background music (menu only)
  * Plays in loop at low volume
  * Checks if already playing to avoid multiple instances
@@ -197,6 +220,10 @@ export const unloadSounds = async () => {
     if (landingSound) {
       await landingSound.unloadAsync();
       landingSound = null;
+    }
+    if (challengeSound) {
+      await challengeSound.unloadAsync();
+      challengeSound = null;
     }
     if (backgroundMusic) {
       await backgroundMusic.unloadAsync();

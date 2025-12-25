@@ -76,13 +76,15 @@ const TUTORIAL_CONFIG = {
       hint: 'Dépasse MAX pour détruire !',
       expectedPath: [3, 7, 11, 10, 14, 15], // Six 3s -> become 6, exceeds MAX 3
       // Path: 3→7 (down), 7→11 (down), 11→10 (left), 10→14 (down), 14→15 (right)
+      highlightMax: true,
     },
     {
       id: 5,
-      hint: 'Termine avec les cases restantes',
+      hint: 'Atteins l\'objectif pour gagner !',
       // After destruction and gravity, left column has 2s
       expectedPath: [0, 4, 8, 12], // Four 2s in left column -> become 4, exceeds MAX 3
       isLastStep: true,
+      // No highlightMax here - focus on objective blinking
     },
   ],
 };

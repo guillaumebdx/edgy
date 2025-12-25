@@ -249,10 +249,14 @@ const CareerMap = ({
   isLoading,
   onSelectLevel,
   onNewGame,
+  onDebugSetLevel,
 }) => {
   // Settings menu state
   const [showSettings, setShowSettings] = useState(false);
   const [soundEnabled, setSoundEnabledState] = useState(true);
+  
+  // Debug menu state
+  const [showDebugMenu, setShowDebugMenu] = useState(false);
 
   // Load sound preference on mount
   useEffect(() => {
@@ -269,7 +273,7 @@ const CareerMap = ({
     await setSoundEnabled(newValue);
   };
 
-  // Hidden reset feature - 5 taps on title
+  // Hidden debug feature - 5 taps on title
   const [tapCount, setTapCount] = useState(0);
   const tapTimeoutRef = useRef(null);
 
@@ -283,21 +287,21 @@ const CareerMap = ({
     setTapCount(newCount);
 
     if (newCount >= 5) {
-      // Reset tap count and show confirmation
+      // Reset tap count and show debug menu
       setTapCount(0);
-      Alert.alert(
-        'Réinitialiser',
-        'Voulez-vous réinitialiser la partie ?',
-        [
-          { text: 'Annuler', style: 'cancel' },
-          { text: 'Confirmer', style: 'destructive', onPress: onNewGame },
-        ]
-      );
+      setShowDebugMenu(true);
     } else {
       // Reset tap count after 1 second of inactivity
       tapTimeoutRef.current = setTimeout(() => {
         setTapCount(0);
       }, 1000);
+    }
+  };
+  
+  const handleDebugSelectLevel = (levelId) => {
+    setShowDebugMenu(false);
+    if (onDebugSetLevel) {
+      onDebugSetLevel(levelId);
     }
   };
   if (isLoading) {
@@ -354,6 +358,34 @@ const CareerMap = ({
         onToggleSound={handleToggleSound}
         onResetProgress={onNewGame}
       />
+
+      {/* Debug Menu Modal */}
+      {showDebugMenu && (
+        <View style={styles.debugOverlay}>
+          <View style={styles.debugMenu}>
+            <Text style={styles.debugTitle}>🛠️ Debug - Aller au niveau</Text>
+            <ScrollView style={styles.debugScroll}>
+              {CAREER_LEVELS.map((level) => (
+                <TouchableOpacity
+                  key={level.id}
+                  style={styles.debugLevelButton}
+                  onPress={() => handleDebugSelectLevel(level.id)}
+                >
+                  <Text style={styles.debugLevelText}>
+                    Niveau {level.id} - {level.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.debugCloseButton}
+              onPress={() => setShowDebugMenu(false)}
+            >
+              <Text style={styles.debugCloseText}>Annuler</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* Scrollable map */}
       <ScrollView
@@ -595,7 +627,8 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   starEmpty: {
-    color: 'rgba(100, 110, 120, 0.5)',
+    color: 'rgba(80, 90, 100, 0.4)',
+    textShadowColor: 'transparent',
   },
   starLocked: {
     color: 'rgba(80, 85, 95, 0.4)',
@@ -687,6 +720,57 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 40,
+  },
+  // Debug menu styles
+  debugOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  debugMenu: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 16,
+    padding: 20,
+    width: '85%',
+    maxHeight: '70%',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 100, 100, 0.4)',
+  },
+  debugTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ff6666',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  debugScroll: {
+    maxHeight: 300,
+  },
+  debugLevelButton: {
+    backgroundColor: 'rgba(255, 100, 100, 0.15)',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  debugLevelText: {
+    color: '#e0e0e0',
+    fontSize: 16,
+  },
+  debugCloseButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  debugCloseText: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 16,
   },
 });
 

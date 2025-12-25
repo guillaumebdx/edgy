@@ -166,6 +166,15 @@ const useCareerState = () => {
       const nextLevelNumber = playingLevelNumber + 1;
       const hasNextLevel = levelExists(nextLevelNumber);
       
+      // Save progression immediately (unlock next level)
+      // Only update career level if we're advancing (not replaying)
+      const newUnlockedLevel = Math.max(unlockedLevel, nextLevelNumber);
+      const newCareerLevel = Math.max(careerLevelNumber, nextLevelNumber);
+      setUnlockedLevel(newUnlockedLevel);
+      setCareerLevelNumber(newCareerLevel);
+      setHasSavedGame(true);
+      await saveCareerProgress(newCareerLevel, newUnlockedLevel);
+      
       return {
         success: true,
         careerCompleted: !hasNextLevel,
@@ -187,36 +196,24 @@ const useCareerState = () => {
         starsEarned: 0,
       };
     }
-  }, [playingLevelNumber, careerLevelNumber, getPlayingLevel, isLevelCompleted, calculateStars]);
+  }, [playingLevelNumber, careerLevelNumber, unlockedLevel, getPlayingLevel, isLevelCompleted, calculateStars]);
 
   /**
    * Advance to next level after user confirms
    * Called when user clicks "Next Level" button
-   * Saves progress to SQLite
-   * Only called when completing current career level (not replays)
+   * Progress is already saved in processRunEnd, this just updates playingLevelNumber
    */
   const advanceToNextLevel = useCallback(async () => {
     const nextLevelNumber = playingLevelNumber + 1;
     
     if (levelExists(nextLevelNumber)) {
-      const newUnlockedLevel = Math.max(unlockedLevel, nextLevelNumber);
-      
-      setCareerLevelNumber(nextLevelNumber);
+      // Just update playing level - career progress already saved in processRunEnd
       setPlayingLevelNumber(nextLevelNumber);
-      setUnlockedLevel(newUnlockedLevel);
-      setHasSavedGame(true);
-      
-      // Save to SQLite
-      await saveCareerProgress(nextLevelNumber, newUnlockedLevel);
     } else {
       // Career completed
       setCareerCompleted(true);
-      setHasSavedGame(true);
-      
-      // Save final state
-      await saveCareerProgress(playingLevelNumber, unlockedLevel);
     }
-  }, [playingLevelNumber, unlockedLevel]);
+  }, [playingLevelNumber]);
 
   /**
    * Reset career to level 0 (tutorial - new game)
@@ -259,6 +256,30 @@ const useCareerState = () => {
     }
   }, [unlockedLevel]);
 
+  /**
+   * DEBUG: Set career to a specific level with all previous levels completed with 3 stars
+   * @param {number} targetLevel - Level to set as current
+   */
+  const debugSetLevel = useCallback(async (targetLevel) => {
+    // Set career state
+    setCareerLevelNumber(targetLevel);
+    setPlayingLevelNumber(targetLevel);
+    setUnlockedLevel(targetLevel);
+    setHasSavedGame(true);
+    setCareerCompleted(false);
+    
+    // Set 3 stars for all previous levels
+    const newStars = {};
+    for (let i = 0; i < targetLevel; i++) {
+      newStars[i] = 3;
+      await saveLevelStars(i, 3);
+    }
+    setLevelStars(newStars);
+    
+    // Save to SQLite
+    await saveCareerProgress(targetLevel, targetLevel);
+  }, []);
+
   return {
     // State - career progress (persisted)
     careerLevelNumber,
@@ -280,6 +301,7 @@ const useCareerState = () => {
     resetCareer,
     continueCareer,
     selectLevel,
+    debugSetLevel,
   };
 };
 
