@@ -25,6 +25,7 @@ import {
   hasValidMoves,
   getCellFromPosition,
   checkColumnOfValue,
+  checkRowOfValue,
 } from '../gameLogic';
 import { CHALLENGE_TYPES } from '../careerLevels';
 import {
@@ -237,30 +238,44 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   }, []);
 
   // Check for no valid moves after grid changes
+  // Use ref to check current levelComplete state inside timeout
+  const levelCompleteRef = useRef(false);
   useEffect(() => {
-    // Don't check during animations, game over, level complete, or tutorial
-    if (isShuffling || gameOver || levelComplete || isTutorialLevel) {
+    levelCompleteRef.current = levelComplete;
+  }, [levelComplete]);
+  
+  useEffect(() => {
+    // Don't check during animations, game over, level complete, tutorial, or while resolving a path
+    if (isShuffling || gameOver || levelComplete || isTutorialLevel || isResolvingRef.current) {
       setNoMovesAvailable(false);
       return;
     }
     
-    // Small delay to let animations finish
+    // Longer delay to let all animations and score updates finish (especially for big combos)
     const timer = setTimeout(() => {
+      // Re-check all conditions inside timeout to avoid race conditions
+      if (levelCompleteRef.current || isResolvingRef.current || gameOver) {
+        setNoMovesAvailable(false);
+        return;
+      }
+      
       const hasMoves = hasValidMoves(gridData, gridSize);
       if (!hasMoves) {
-        if (shufflesRemaining > 0) {
+        if (shufflesRemainingRef.current > 0) {
           // Still have shuffles - show message and blink button
           setNoMovesAvailable(true);
           showNoMovesMessage();
         } else {
-          // No shuffles left - game over
+          // No shuffles left - game over (only if level not complete)
           setNoMovesAvailable(false);
-          setGameOver(true);
+          if (!levelCompleteRef.current) {
+            setGameOver(true);
+          }
         }
       } else {
         setNoMovesAvailable(false);
       }
-    }, 500);
+    }, 800);
     
     return () => clearTimeout(timer);
   }, [gridData, gridSize, isShuffling, gameOver, levelComplete, isTutorialLevel, shufflesRemaining, showNoMovesMessage]);
@@ -296,6 +311,26 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
           ANIMATION.CELEBRATION_DURATION
         );
         // Clear column highlight after 1 second
+        setTimeout(() => setChallengeColumn(null), 1000);
+        // Haptic feedback for challenge
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        // Play challenge success sound
+        playChallengeSound();
+      }
+    } else if (currentChallenge.type === CHALLENGE_TYPES.ROW_OF_FIVES) {
+      const row = checkRowOfValue(grid, 5, gridSizeRef.current);
+      if (row !== null) {
+        setChallengeCompleted(true);
+        challengeCompletedRef.current = true;
+        // Store row as negative to differentiate from column (row 0 = -1, row 1 = -2, etc.)
+        setChallengeColumn(-(row + 1));
+        // Show celebration for challenge completion
+        setCelebration({ visible: true, text: '⭐ CHALLENGE! ⭐', key: Date.now() });
+        setTimeout(
+          () => setCelebration((prev) => ({ ...prev, visible: false })),
+          ANIMATION.CELEBRATION_DURATION
+        );
+        // Clear row highlight after 1 second
         setTimeout(() => setChallengeColumn(null), 1000);
         // Haptic feedback for challenge
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

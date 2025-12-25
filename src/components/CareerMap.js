@@ -35,6 +35,13 @@ const LEVEL_5_IMAGE = require('../../assets/3branches.png');
 const LEVEL_6_IMAGE = require('../../assets/pile.png');
 const LEVEL_7_IMAGE = require('../../assets/wifi.png');
 const LEVEL_8_IMAGE = require('../../assets/_aimant.png');
+const LEVEL_9_IMAGE = require('../../assets/_bobine_magnetique.png');
+const LEVEL_10_IMAGE = require('../../assets/_composant_bleu.png');
+const LEVEL_11_IMAGE = require('../../assets/_concept.png');
+const LEVEL_12_IMAGE = require('../../assets/_condensateur_ic.png');
+const LEVEL_13_IMAGE = require('../../assets/_double_vis_vert.png');
+const LEVEL_14_IMAGE = require('../../assets/_fer_jaune.png');
+const LEVEL_15_IMAGE = require('../../assets/_fusible.png');
 
 // Map level IDs to their specific component images
 const LEVEL_COMPONENTS = {
@@ -47,6 +54,13 @@ const LEVEL_COMPONENTS = {
   6: LEVEL_6_IMAGE,
   7: LEVEL_7_IMAGE,
   8: LEVEL_8_IMAGE,
+  9: LEVEL_9_IMAGE,
+  10: LEVEL_10_IMAGE,
+  11: LEVEL_11_IMAGE,
+  12: LEVEL_12_IMAGE,
+  13: LEVEL_13_IMAGE,
+  14: LEVEL_14_IMAGE,
+  15: LEVEL_15_IMAGE,
 };
 
 /**

@@ -244,6 +244,31 @@ export const checkColumnOfValue = (grid, targetValue, gridSize = GRID_SIZE) => {
 };
 
 /**
+ * Check if any row is entirely filled with a specific value
+ * Used for challenge detection (e.g., row of 5s)
+ * @param {number[]} grid - Current grid
+ * @param {number} targetValue - Value to check for
+ * @param {number} gridSize - Size of the grid
+ * @returns {number|null} Row index if found, null otherwise
+ */
+export const checkRowOfValue = (grid, targetValue, gridSize = GRID_SIZE) => {
+  for (let row = 0; row < gridSize; row++) {
+    let isFullRow = true;
+    for (let col = 0; col < gridSize; col++) {
+      const index = row * gridSize + col;
+      if (grid[index] !== targetValue) {
+        isFullRow = false;
+        break;
+      }
+    }
+    if (isFullRow) {
+      return row; // Return the row index that matches
+    }
+  }
+  return null; // No row found
+};
+
+/**
  * Check if any valid moves exist on the grid
  * A valid move requires at least (value + 1) adjacent cells of the same value
  * @param {(number|null)[]} grid - Current grid

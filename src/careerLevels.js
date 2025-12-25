@@ -23,6 +23,7 @@
 // Challenge types
 export const CHALLENGE_TYPES = {
   COLUMN_OF_FIVES: 'column_of_fives', // Full column of value 5
+  ROW_OF_FIVES: 'row_of_fives', // Full row of value 5
 };
 
 /**
@@ -177,6 +178,82 @@ export const CAREER_LEVELS = [
     stock: 60,
     targetScore: 7000,
     shuffles: 2, // New shuffle feature
+    challenge: null,
+  },
+  {
+    id: 9,
+    name: 'Bobine relaxante',
+    gridSize: 5,
+    maxValue: 5,
+    stock: 80,
+    targetScore: 4000,
+    shuffles: 5,
+    challenge: null,
+  },
+  {
+    id: 10,
+    name: 'Circuit intégré',
+    gridSize: 8,
+    maxValue: 8,
+    stock: 50,
+    targetScore: 10000,
+    shuffles: 10,
+    challenge: null,
+  },
+  {
+    id: 11,
+    name: 'Mini concept',
+    gridSize: 3,
+    maxValue: 3,
+    stock: 30,
+    targetScore: 500,
+    shuffles: 3,
+    challenge: null,
+  },
+  {
+    id: 12,
+    name: 'Condensateur',
+    gridSize: 6,
+    maxValue: 5,
+    stock: 55,
+    targetScore: 5000,
+    shuffles: 2,
+    challenge: {
+      type: CHALLENGE_TYPES.ROW_OF_FIVES,
+      description: 'Aligner une ligne complète de 5',
+    },
+  },
+  {
+    id: 13,
+    name: 'Double vis',
+    gridSize: 6,
+    maxValue: 6,
+    stock: 55,
+    targetScore: 5500,
+    shuffles: 3,
+    challenge: {
+      type: CHALLENGE_TYPES.ROW_OF_FIVES,
+      description: 'Aligner une ligne complète de 5',
+    },
+  },
+  {
+    id: 14,
+    name: 'Fer à souder',
+    gridSize: 5,
+    maxValue: 5,
+    stock: 25,
+    targetScore: 3000,
+    shuffles: 1,
+    challenge: null,
+  },
+  {
+    id: 15,
+    name: 'Fusible',
+    gridSize: 5,
+    maxValue: 6,
+    stock: 25,
+    targetScore: 3500,
+    shuffles: 2,
     challenge: null,
   },
 ];

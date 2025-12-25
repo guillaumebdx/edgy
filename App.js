@@ -409,8 +409,13 @@ export default function App() {
               const isShaking = shakingCells.includes(index);
               const fallDistance = fallingCells[index] || 0;
               const col = index % gridSize;
+              const row = Math.floor(index / gridSize);
 
-              const isChallengeColumn = challengeColumn !== null && col === challengeColumn;
+              // challengeColumn: positive = column index, negative = -(row + 1)
+              const isChallengeHighlight = challengeColumn !== null && (
+                (challengeColumn >= 0 && col === challengeColumn) ||
+                (challengeColumn < 0 && row === -(challengeColumn + 1))
+              );
 
               // Entry animation delay based on phase
               const entryDelay = entryPhase === 'falling' 
@@ -434,7 +439,7 @@ export default function App() {
                   cellHeight={gridLayout.cellHeight}
                   gridSize={gridSize}
                   maxValue={maxValue}
-                  isChallengeColumn={isChallengeColumn}
+                  isChallengeColumn={isChallengeHighlight}
                   entryPhase={entryPhase}
                   entryDelay={entryDelay}
                   isShuffling={isShuffling}
