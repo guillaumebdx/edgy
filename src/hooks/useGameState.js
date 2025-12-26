@@ -95,6 +95,9 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   
   // Store targetScore in ref for use in callbacks
   const targetScoreRef = useRef(targetScore);
+  
+  // Score ref for centralized game end checking
+  const scoreRef = useRef(0);
 
   // Feedback state
   const [floatingScore, setFloatingScore] = useState({ visible: false, text: '', key: 0 });
@@ -136,6 +139,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       // Reset all game state for new level - use fixed grid for tutorial
       setGridData(tutorial?.initialGrid ? [...tutorial.initialGrid] : generateGrid(gridSize, maxValue));
       setScore(0);
+      scoreRef.current = 0;
       setCombo(0);
       stockRef.current = initialStock;
       setStock(initialStock);
@@ -237,48 +241,54 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     );
   }, []);
 
-  // Check for no valid moves after grid changes
-  // Use ref to check current levelComplete state inside timeout
-  const levelCompleteRef = useRef(false);
-  useEffect(() => {
-    levelCompleteRef.current = levelComplete;
-  }, [levelComplete]);
-  
-  useEffect(() => {
-    // Don't check during animations, game over, level complete, tutorial, or while resolving a path
-    if (isShuffling || gameOver || levelComplete || isTutorialLevel || isResolvingRef.current) {
+  /**
+   * CENTRALIZED GAME END CHECK
+   * This is the ONLY function that should determine game end state.
+   * It uses refs to get the most up-to-date values.
+   * 
+   * Priority hierarchy:
+   * 1. Score >= target → VICTORY (levelComplete=true, gameOver=true)
+   * 2. No valid moves + no shuffles → DEFEAT (levelComplete=false, gameOver=true)
+   * 3. No valid moves + shuffles > 0 → STUCK (show message, blink shuffle)
+   * 4. Otherwise → PLAYING
+   * 
+   * @param {number[]} currentGrid - The current grid state
+   * @param {number} currentScore - The current score (passed explicitly to avoid stale refs)
+   */
+  const checkGameEnd = useCallback((currentGrid, currentScore) => {
+    // Skip if already game over
+    if (gameOver) return;
+    
+    // PRIORITY 1: Check for victory (score >= target) - applies to ALL levels including tutorial
+    if (targetScoreRef.current && currentScore >= targetScoreRef.current) {
+      setLevelComplete(true);
+      setGameOver(true);
       setNoMovesAvailable(false);
       return;
     }
     
-    // Longer delay to let all animations and score updates finish (especially for big combos)
-    const timer = setTimeout(() => {
-      // Re-check all conditions inside timeout to avoid race conditions
-      if (levelCompleteRef.current || isResolvingRef.current || gameOver) {
-        setNoMovesAvailable(false);
-        return;
-      }
-      
-      const hasMoves = hasValidMoves(gridData, gridSize);
-      if (!hasMoves) {
-        if (shufflesRemainingRef.current > 0) {
-          // Still have shuffles - show message and blink button
-          setNoMovesAvailable(true);
-          showNoMovesMessage();
-        } else {
-          // No shuffles left - game over (only if level not complete)
-          setNoMovesAvailable(false);
-          if (!levelCompleteRef.current) {
-            setGameOver(true);
-          }
-        }
-      } else {
-        setNoMovesAvailable(false);
-      }
-    }, 800);
+    // Skip no-moves check for tutorial (tutorial has guided steps, not free play)
+    if (isTutorialLevel) return;
     
-    return () => clearTimeout(timer);
-  }, [gridData, gridSize, isShuffling, gameOver, levelComplete, isTutorialLevel, shufflesRemaining, showNoMovesMessage]);
+    // Check if there are valid moves
+    const hasMoves = hasValidMoves(currentGrid, gridSizeRef.current);
+    
+    if (!hasMoves) {
+      // PRIORITY 2: No moves + no shuffles = DEFEAT
+      if (shufflesRemainingRef.current === 0) {
+        setLevelComplete(false);
+        setGameOver(true);
+        setNoMovesAvailable(false);
+      } else {
+        // PRIORITY 3: No moves but shuffles available = STUCK
+        setNoMovesAvailable(true);
+        showNoMovesMessage();
+      }
+    } else {
+      // PRIORITY 4: Game continues
+      setNoMovesAvailable(false);
+    }
+  }, [gameOver, isTutorialLevel, showNoMovesMessage]);
 
   /**
    * Check if challenge is completed on current grid
@@ -427,17 +437,14 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
           // Update combo and score
           const newCombo = combo + 1;
           const points = calculateFinalPoints(basePoints, newCombo);
+          
+          // Calculate and store final score SYNCHRONOUSLY before any setState
+          // This ensures checkGameEnd always has the correct score
+          const finalScore = scoreRef.current + points;
+          scoreRef.current = finalScore;
 
           setCombo(newCombo);
-          setScore((prev) => {
-            const newScore = prev + points;
-            // Check if target score reached - level complete!
-            if (targetScoreRef.current && newScore >= targetScoreRef.current) {
-              setLevelComplete(true);
-              setGameOver(true);
-            }
-            return newScore;
-          });
+          setScore(finalScore);
           showFloatingScore(getFloatingScoreText(points, newCombo));
 
           // Check for celebration trigger
@@ -445,7 +452,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
             showCelebration();
           }
 
-          // Apply gravity and check game over
+          // Apply gravity
           setGridData((prevGrid) => {
             const gridWithNulls = [...prevGrid];
             currentPath.forEach((cellIndex) => {
@@ -478,13 +485,8 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
                 // Check challenge after gravity settles
                 checkChallenge(newGrid);
 
-                // Only check for game over if level not already complete and no shuffles remaining
-                setLevelComplete((isComplete) => {
-                  if (!isComplete && !hasValidMoves(newGrid, gridSizeRef.current) && shufflesRemainingRef.current === 0) {
-                    setGameOver(true);
-                  }
-                  return isComplete;
-                });
+                // CENTRALIZED GAME END CHECK - called AFTER all animations complete
+                checkGameEnd(newGrid, scoreRef.current);
               }, ANIMATION.FALL_ANIMATION_DURATION);
             }, 50);
 
@@ -497,30 +499,23 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       } else {
         // No explosion, just transformation
         setCombo(0);
-        setScore((prev) => {
-          const newScore = prev + basePoints;
-          // Check if target score reached - level complete!
-          if (targetScoreRef.current && newScore >= targetScoreRef.current) {
-            setLevelComplete(true);
-            setGameOver(true);
-          }
-          return newScore;
-        });
+        
+        // Calculate and store final score SYNCHRONOUSLY before any setState
+        // This ensures checkGameEnd always has the correct score
+        const finalScore = scoreRef.current + basePoints;
+        scoreRef.current = finalScore;
+        
+        setScore(finalScore);
         showFloatingScore(`+${basePoints}`);
         isResolvingRef.current = false;
 
-        // Check challenge and game over
+        // Check challenge and game end
         setGridData((currentGrid) => {
           // Check challenge after transformation
           checkChallenge(currentGrid);
           
-          // Only check for game over if level not already complete and no shuffles remaining
-          setLevelComplete((isComplete) => {
-            if (!isComplete && !hasValidMoves(currentGrid, gridSizeRef.current) && shufflesRemainingRef.current === 0) {
-              setGameOver(true);
-            }
-            return isComplete;
-          });
+          // CENTRALIZED GAME END CHECK - scoreRef.current is already updated
+          checkGameEnd(currentGrid, scoreRef.current);
           return currentGrid;
         });
       }
@@ -532,7 +527,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
         tutorialHandlers.cancelPath?.();
       }
     }
-  }, [combo, triggerHaptic, showFloatingScore, showCelebration, checkChallenge, tutorialHandlers]);
+  }, [combo, triggerHaptic, showFloatingScore, showCelebration, checkChallenge, checkGameEnd, tutorialHandlers]);
 
   /**
    * Shuffles the existing grid cells (does not create new values)
@@ -541,8 +536,12 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   const shuffleGrid = useCallback(() => {
     if (shufflesRemaining <= 0 || isShuffling || gameOver || isTutorialLevel) return;
     
+    // Update ref SYNCHRONOUSLY before setState to ensure checkGameEnd has correct value
+    const newShufflesRemaining = shufflesRemaining - 1;
+    shufflesRemainingRef.current = newShufflesRemaining;
+    
     setIsShuffling(true);
-    setShufflesRemaining(prev => prev - 1);
+    setShufflesRemaining(newShufflesRemaining);
     playMixSound();
     
     // Get all non-null cell values and their positions
@@ -561,12 +560,14 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       return values[valueIndex++];
     });
     
-    // Apply with animation delay
+    // Apply with animation delay, then check game end
     setTimeout(() => {
       setGridData(newGrid);
       setIsShuffling(false);
+      // Check game end after shuffle (score unchanged, just check for moves)
+      checkGameEnd(newGrid, scoreRef.current);
     }, 300);
-  }, [shufflesRemaining, isShuffling, gameOver, isTutorialLevel, gridData]);
+  }, [shufflesRemaining, isShuffling, gameOver, isTutorialLevel, gridData, checkGameEnd]);
 
   /**
    * Restarts the game with fresh state using current level parameters
@@ -575,6 +576,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     // Use fixed grid for tutorial, random for normal levels
     setGridData(tutorial?.initialGrid ? [...tutorial.initialGrid] : generateGrid(gridSizeRef.current, maxValueRef.current));
     setScore(0);
+    scoreRef.current = 0;
     setCombo(0);
     stockRef.current = initialStock;
     setStock(initialStock);
