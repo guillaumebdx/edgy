@@ -11,3 +11,4 @@ export { default as CareerMap } from './CareerMap';
 export { default as LevelInfo } from './LevelInfo';
 export { default as TutorialOverlay } from './TutorialOverlay';
 export { default as SettingsMenu } from './SettingsMenu';
+export { default as PathCounter } from './PathCounter';

@@ -39,6 +39,7 @@ import {
   LevelInfo,
   CareerMap,
   TutorialOverlay,
+  PathCounter,
 } from './src/components';
 import { getLevelConfig } from './src/careerLevels';
 import { useGameState, useCareerState, useTutorialState, useLevelEntryAnimation } from './src/hooks';
@@ -387,6 +388,9 @@ export default function App() {
       <TouchableOpacity style={styles.menuButton} onPress={handleBackToMenu}>
         <Text style={styles.menuButtonText}>← Menu</Text>
       </TouchableOpacity>
+
+      {/* Path selection counter - absolute positioned */}
+      <PathCounter count={path.length} />
 
       {/* Level info display */}
       {isFreeModeActive ? (
