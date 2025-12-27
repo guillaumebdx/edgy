@@ -4,7 +4,8 @@
  */
 
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet } from 'react-native';
+import { getLevelImage } from '../levelAssets';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -17,14 +18,29 @@ const LevelInfo = ({
   levelNumber, 
   levelName, 
   targetScore, 
+  currentScore = 0,
+  highScore = 0,
   maxValue, 
-  stock, 
+  initialStock, 
+  currentStock,
   totalLevels, 
   challenge, 
   challengeCompleted,
   isTutorialLastStep = false,
   highlightMax = false,
+  levelId = null,
+  isFreeMode = false,
 }) => {
+  // Get level component image
+  const levelImage = levelId !== null ? getLevelImage(levelId) : null;
+  
+  // Calculate progress percentages
+  const hasObjective = targetScore && targetScore > 0;
+  // For free mode: if no high score yet, show empty bar; otherwise show progress vs high score
+  const scoreReference = isFreeMode ? highScore : targetScore;
+  const scoreProgress = scoreReference > 0 ? Math.min(currentScore / scoreReference, 1) : (currentScore > 0 ? 1 : 0);
+  const stockProgress = initialStock > 0 ? Math.max(0, currentStock / initialStock) : 1;
+  
   // Blinking animation for tutorial highlights
   const blinkOpacity = useSharedValue(1);
   const maxBlinkOpacity = useSharedValue(1);
@@ -67,42 +83,135 @@ const LevelInfo = ({
     opacity: maxBlinkOpacity.value,
   }));
 
+  // Get color for stock gauge based on remaining percentage
+  const getStockColor = () => {
+    if (stockProgress > 0.5) return '#70D0B0';
+    if (stockProgress > 0.25) return '#E8943A';
+    return '#FF6B6B';
+  };
+
   return (
-    <View style={styles.container}>
-      <View style={styles.levelBadge}>
-        <Text style={styles.levelNumber}>{levelNumber}</Text>
-        <Text style={styles.levelTotal}>/{totalLevels}</Text>
-      </View>
-      <View style={styles.infoContainer}>
-        <Text style={styles.levelName}>{levelName}</Text>
-        <View style={styles.statsRow}>
-          <Animated.Text style={[
-            styles.statText,
-            isTutorialLastStep && styles.objectifHighlight,
-            isTutorialLastStep && blinkStyle,
-          ]}>
-            Objectif: {targetScore.toLocaleString()}
-          </Animated.Text>
-          <Text style={styles.statSeparator}>•</Text>
-          <Animated.Text style={[
-            styles.statText,
-            highlightMax && styles.maxHighlight,
+    <View style={styles.dashboardCard}>
+      {/* Left side: Component image */}
+      {levelImage && (
+        <View style={styles.imageSection}>
+          <Image source={levelImage} style={styles.componentImage} resizeMode="contain" />
+        </View>
+      )}
+      
+      {/* Right side: Info */}
+      <View style={styles.infoSection}>
+        {/* Header: Level number and name */}
+        <View style={styles.headerRow}>
+          {levelNumber !== null && (
+            <View style={styles.levelBadge}>
+              <Text style={styles.levelNumber}>{levelNumber}</Text>
+            </View>
+          )}
+          <Text style={styles.levelName}>{levelName}</Text>
+          
+          {/* MAX badge */}
+          <Animated.View style={[
+            styles.maxBadge,
             highlightMax && maxBlinkStyle,
           ]}>
-            MAX: {maxValue}
-          </Animated.Text>
-          <Text style={styles.statSeparator}>•</Text>
-          <Text style={styles.statText}>Stock: {stock}</Text>
+            <Text style={styles.maxLabel}>MAX</Text>
+            <Animated.Text style={[
+              styles.maxValue,
+              highlightMax && styles.maxHighlight,
+            ]}>
+              {maxValue}
+            </Animated.Text>
+          </Animated.View>
         </View>
+        
+        {/* Gauges row */}
+        <View style={styles.gaugesRow}>
+          {/* Score gauge - different display for career vs free mode */}
+          {isFreeMode ? (
+            <View style={[styles.gaugeContainer, styles.gaugeContainerScore]}>
+              <View style={styles.gaugeHeader}>
+                <Text style={styles.gaugeLabel}>SCORE vs RECORD</Text>
+                <Text style={[
+                  styles.gaugeValue,
+                  currentScore > highScore && highScore > 0 && styles.gaugeValueComplete,
+                ]}>
+                  {currentScore.toLocaleString()}{highScore > 0 ? ` / ${highScore.toLocaleString()}` : ''}
+                </Text>
+              </View>
+              <View style={styles.gaugeTrack}>
+                <View style={[
+                  styles.gaugeFill,
+                  currentScore > highScore && highScore > 0 ? styles.gaugeFillComplete : styles.gaugeFillScore,
+                  { width: `${scoreProgress * 100}%` },
+                ]} />
+              </View>
+            </View>
+          ) : hasObjective ? (
+            <Animated.View style={[
+              styles.gaugeContainer,
+              styles.gaugeContainerScore,
+              isTutorialLastStep && blinkStyle,
+            ]}>
+              <View style={styles.gaugeHeader}>
+                <Text style={styles.gaugeLabel}>SCORE</Text>
+                <Animated.Text style={[
+                  styles.gaugeValue,
+                  scoreProgress >= 1 && styles.gaugeValueComplete,
+                  isTutorialLastStep && styles.objectifHighlight,
+                ]}>
+                  {currentScore.toLocaleString()} / {targetScore.toLocaleString()}
+                </Animated.Text>
+              </View>
+              <View style={styles.gaugeTrack}>
+                <View style={[
+                  styles.gaugeFill,
+                  styles.gaugeFillScore,
+                  { width: `${scoreProgress * 100}%` },
+                  scoreProgress >= 1 && styles.gaugeFillComplete,
+                ]} />
+              </View>
+            </Animated.View>
+          ) : (
+            <View style={[styles.gaugeContainer, styles.gaugeContainerScore]}>
+              <View style={styles.gaugeHeader}>
+                <Text style={styles.gaugeLabel}>SCORE</Text>
+                <Text style={styles.gaugeValue}>{currentScore.toLocaleString()}</Text>
+              </View>
+              <View style={styles.gaugeTrack}>
+                <View style={[styles.gaugeFill, styles.gaugeFillFree, { width: '100%' }]} />
+              </View>
+            </View>
+          )}
+          
+          {/* Stock gauge */}
+          <View style={styles.gaugeContainer}>
+            <View style={styles.gaugeHeader}>
+              <Text style={styles.gaugeLabel}>STOCK</Text>
+              <Text style={[styles.gaugeValue, { color: getStockColor() }]}>
+                {currentStock}
+              </Text>
+            </View>
+            <View style={styles.gaugeTrack}>
+              <View style={[
+                styles.gaugeFill,
+                { width: `${stockProgress * 100}%`, backgroundColor: getStockColor() },
+              ]} />
+            </View>
+          </View>
+        </View>
+        
+        {/* Challenge row */}
         {challenge && (
-          <View style={styles.challengeRow}>
+          <View style={[
+            styles.challengeRow,
+            challengeCompleted && styles.challengeRowCompleted,
+          ]}>
             <Text style={[
               styles.challengeText,
               challengeCompleted && styles.challengeCompleted
             ]}>
-              {challengeCompleted ? '⭐ ' : '☆ '}
-              {challenge.description}
-              {challengeCompleted ? ' ✓' : ''}
+              {challengeCompleted ? '⭐' : '☆'} {challenge.description}
             </Text>
           </View>
         )}
@@ -112,82 +221,157 @@ const LevelInfo = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
+  dashboardCard: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginBottom: 12,
+    padding: 12,
+    backgroundColor: 'rgba(20, 30, 40, 0.85)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(80, 120, 140, 0.4)',
+  },
+  imageSection: {
+    width: 70,
+    height: 70,
+    marginRight: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(40, 60, 80, 0.5)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 160, 180, 0.3)',
+  },
+  componentImage: {
+    width: 50,
+    height: 50,
+  },
+  infoSection: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
     marginBottom: 8,
   },
   levelBadge: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    backgroundColor: 'rgba(80, 140, 160, 0.3)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    backgroundColor: 'rgba(100, 160, 180, 0.3)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
     borderRadius: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(100, 160, 180, 0.4)',
-    marginRight: 12,
+    marginRight: 8,
   },
   levelNumber: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     fontFamily: 'monospace',
     color: 'rgba(255, 255, 255, 0.9)',
   },
-  levelTotal: {
-    fontSize: 12,
-    fontWeight: '500',
+  levelName: {
+    flex: 1,
+    fontSize: 17,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.95)',
+  },
+  maxBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(80, 60, 80, 0.4)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    gap: 4,
+  },
+  maxLabel: {
+    fontSize: 10,
+    fontWeight: '600',
     fontFamily: 'monospace',
     color: 'rgba(255, 255, 255, 0.5)',
   },
-  infoContainer: {
+  maxValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    fontFamily: 'monospace',
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  gaugesRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  gaugeContainer: {
     flex: 1,
   },
-  levelName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.85)',
-    marginBottom: 2,
+  gaugeContainerScore: {
+    flex: 1.8,
   },
-  statsRow: {
+  gaugeHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 3,
   },
-  statText: {
-    fontSize: 13,
+  gaugeLabel: {
+    fontSize: 10,
+    fontWeight: '600',
     fontFamily: 'monospace',
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: 'rgba(255, 255, 255, 0.5)',
+    letterSpacing: 0.5,
+  },
+  gaugeValue: {
+    fontSize: 13,
+    fontWeight: '700',
+    fontFamily: 'monospace',
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  gaugeValueComplete: {
+    color: '#70D0B0',
+  },
+  gaugeTrack: {
+    height: 8,
+    backgroundColor: 'rgba(60, 80, 100, 0.4)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  gaugeFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  gaugeFillScore: {
+    backgroundColor: 'rgba(100, 160, 180, 0.8)',
+  },
+  gaugeFillComplete: {
+    backgroundColor: '#70D0B0',
+  },
+  gaugeFillFree: {
+    backgroundColor: 'rgba(100, 160, 180, 0.4)',
   },
   objectifHighlight: {
     color: '#70D0B0',
-    fontWeight: 'bold',
-    fontSize: 14,
   },
   maxHighlight: {
     color: '#FF6B6B',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  statSeparator: {
-    fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.3)',
-    marginHorizontal: 6,
   },
   challengeRow: {
-    marginTop: 4,
+    marginTop: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    backgroundColor: 'rgba(255, 200, 100, 0.1)',
+    borderRadius: 4,
+    borderLeftWidth: 2,
+    borderLeftColor: 'rgba(255, 200, 100, 0.5)',
+  },
+  challengeRowCompleted: {
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    borderLeftColor: '#FFD700',
   },
   challengeText: {
     fontSize: 10,
     fontFamily: 'monospace',
-    color: 'rgba(255, 200, 100, 0.8)',
+    color: 'rgba(255, 200, 100, 0.9)',
   },
   challengeCompleted: {
     color: '#FFD700',
-    textShadowColor: 'rgba(255, 215, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 4,
   },
 });
 

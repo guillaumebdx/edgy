@@ -43,11 +43,24 @@ import {
 import { getLevelConfig } from './src/careerLevels';
 import { useGameState, useCareerState, useTutorialState, useLevelEntryAnimation } from './src/hooks';
 import { initSounds, unloadSounds, startBackgroundMusic, stopBackgroundMusic, playLandingSound } from './src/sounds';
+import { saveHighScore, loadHighScore } from './src/persistence';
 
 // App screens
 const SCREENS = {
   MENU: 'menu',
   GAME: 'game',
+  FREE_MODE: 'free_mode',
+};
+
+// Free Mode configuration
+const FREE_MODE_CONFIG = {
+  id: 'free_mode',
+  name: 'Mode Libre',
+  gridSize: 6,
+  maxValue: 6,
+  stock: 20,
+  shuffles: 2,
+  targetScore: null, // No target - play for high score
 };
 
 /**
@@ -101,10 +114,17 @@ export default function App() {
 
   // Level result state for game over screen
   const [levelResult, setLevelResult] = useState(null);
+  
+  // Free mode state
+  const [isFreeModeActive, setIsFreeModeActive] = useState(false);
+  const [freeHighScore, setFreeHighScore] = useState(0);
 
-  // Tutorial state management
-  const tutorialConfig = playingLevel?.tutorial || null;
-  const isTutorialLevel = !!tutorialConfig;
+  // Determine active level config (career level or free mode)
+  const activeLevelConfig = isFreeModeActive ? FREE_MODE_CONFIG : playingLevel;
+  
+  // Tutorial state management - only active in career mode, not free mode
+  const tutorialConfig = !isFreeModeActive ? (playingLevel?.tutorial || null) : null;
+  const isTutorialLevel = !!tutorialConfig && !isFreeModeActive;
   const tutorialState = useTutorialState(tutorialConfig, isTutorialLevel);
 
   // Get all game state and handlers from custom hook with level config
@@ -135,10 +155,10 @@ export default function App() {
     handleGestureEnd,
     restartGame,
     shuffleGrid,
-  } = useGameState(playingLevel, tutorialState);
+  } = useGameState(activeLevelConfig, tutorialState);
 
   // Level entry animation
-  const isGameScreen = currentScreen === SCREENS.GAME;
+  const isGameScreen = currentScreen === SCREENS.GAME || currentScreen === SCREENS.FREE_MODE;
   const {
     phase: entryPhase,
     isAnimating: isEntryAnimating,
@@ -209,26 +229,56 @@ export default function App() {
   const handleNewGame = useCallback(async () => {
     await resetCareer();
     setLevelResult(null);
+    setIsFreeModeActive(false);
     setCurrentScreen(SCREENS.GAME);
   }, [resetCareer]);
+
+  /**
+   * Handle Free Mode start
+   */
+  const handleFreeMode = useCallback(async () => {
+    const highScore = await loadHighScore('free_mode');
+    setFreeHighScore(highScore);
+    setIsFreeModeActive(true);
+    setLevelResult(null);
+    setCurrentScreen(SCREENS.FREE_MODE);
+  }, []);
 
   /**
    * Return to career map menu
    * If level was completed (levelResult.success), progress is already saved
    */
   const handleBackToMenu = useCallback(async () => {
-    // If level was completed but user clicks Menu instead of Next Level,
-    // we need to ensure progress was saved (it should already be via handleGameOver)
-    // Just clear state and go back to menu
+    // If in free mode, save high score before returning
+    if (isFreeModeActive && score > 0) {
+      await saveHighScore(score, 'free_mode');
+    }
+    setIsFreeModeActive(false);
     setLevelResult(null);
     setCurrentScreen(SCREENS.MENU);
-  }, []);
+  }, [isFreeModeActive, score]);
 
   /**
    * Handle game over - process level completion
    * Uses levelComplete from useGameState (set when target score is reached)
    */
   const handleGameOver = useCallback(async () => {
+    // Free mode: save high score and show result
+    if (isFreeModeActive) {
+      const isNewHighScore = await saveHighScore(score, 'free_mode');
+      const currentHighScore = await loadHighScore('free_mode');
+      setFreeHighScore(currentHighScore);
+      setLevelResult({
+        success: false,
+        careerCompleted: false,
+        isFreeMode: true,
+        isNewHighScore: isNewHighScore && score > 0,
+        highScore: currentHighScore,
+        message: isNewHighScore && score > 0 ? 'Nouveau Record !' : 'Partie terminée',
+      });
+      return;
+    }
+    
     if (levelComplete) {
       // Target score reached - process as success with challenge status
       const result = await processRunEnd(score, challengeCompleted);
@@ -244,7 +294,7 @@ export default function App() {
         starsEarned: 0,
       });
     }
-  }, [score, levelComplete, challengeCompleted, processRunEnd, playingLevel]);
+  }, [score, levelComplete, challengeCompleted, processRunEnd, playingLevel, isFreeModeActive]);
 
   /**
    * Restart current level
@@ -266,7 +316,7 @@ export default function App() {
 
   // Process level completion when game ends
   useEffect(() => {
-    if (gameOver && !levelResult && currentScreen === SCREENS.GAME) {
+    if (gameOver && !levelResult && (currentScreen === SCREENS.GAME || currentScreen === SCREENS.FREE_MODE)) {
       handleGameOver();
     }
   }, [gameOver, levelResult, handleGameOver, currentScreen]);
@@ -316,6 +366,7 @@ export default function App() {
           onSelectLevel={handleSelectLevel}
           onNewGame={handleNewGame}
           onDebugSetLevel={debugSetLevel}
+          onFreeMode={handleFreeMode}
         />
       </GestureHandlerRootView>
     );
@@ -338,18 +389,41 @@ export default function App() {
       </TouchableOpacity>
 
       {/* Level info display */}
-      {playingLevel && (
+      {isFreeModeActive ? (
+        <LevelInfo
+          levelNumber={null}
+          levelName="Mode Libre"
+          targetScore={null}
+          currentScore={score}
+          highScore={freeHighScore}
+          maxValue={maxValue}
+          initialStock={FREE_MODE_CONFIG.stock}
+          currentStock={stock}
+          totalLevels={null}
+          challenge={null}
+          challengeCompleted={false}
+          isTutorialLastStep={false}
+          highlightMax={false}
+          levelId={null}
+          isFreeMode={true}
+        />
+      ) : playingLevel && (
         <LevelInfo
           levelNumber={playingLevelNumber}
           levelName={playingLevel.name}
           targetScore={playingLevel.targetScore}
+          currentScore={score}
+          highScore={0}
           maxValue={maxValue}
-          stock={playingLevel.stock}
+          initialStock={playingLevel.stock}
+          currentStock={stock}
           totalLevels={totalLevels}
           challenge={playingLevel.challenge}
           challengeCompleted={challengeCompleted}
           isTutorialLastStep={isTutorialLevel && tutorialState.isLastStep}
           highlightMax={isTutorialLevel && tutorialState.currentStep?.highlightMax}
+          levelId={playingLevel.id}
+          isFreeMode={false}
         />
       )}
 
@@ -370,7 +444,7 @@ export default function App() {
           <Text style={styles.stockLabel}>restantes</Text>
         </View>
         {/* Shuffle button - only shown when shuffles available */}
-        {(playingLevel?.shuffles > 0 || shufflesRemaining > 0) && (
+        {(activeLevelConfig?.shuffles > 0 || shufflesRemaining > 0) && (
           <Animated.View style={[noMovesAvailable && shuffleBlinkStyle]}>
             <TouchableOpacity 
               style={[
@@ -491,7 +565,7 @@ export default function App() {
           score={score} 
           onRestart={handleRestart}
           levelResult={levelResult || { success: false, message: 'Partie terminée' }}
-          onNextLevel={levelResult?.success && !levelResult?.careerCompleted ? handleNextLevel : null}
+          onNextLevel={levelResult?.success && !levelResult?.careerCompleted && !isFreeModeActive ? handleNextLevel : null}
         />
       )}
       </ImageBackground>

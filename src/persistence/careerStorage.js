@@ -14,6 +14,7 @@ import * as SQLite from 'expo-sqlite';
 const DATABASE_NAME = 'edgy_career.db';
 const TABLE_NAME = 'career_progress';
 const STARS_TABLE = 'level_stars';
+const HIGH_SCORES_TABLE = 'high_scores';
 
 let db = null;
 
@@ -40,6 +41,15 @@ export const initDatabase = async () => {
       CREATE TABLE IF NOT EXISTS ${STARS_TABLE} (
         level_id INTEGER PRIMARY KEY NOT NULL,
         stars INTEGER NOT NULL DEFAULT 0,
+        updated_at INTEGER DEFAULT (strftime('%s', 'now'))
+      );
+    `);
+    
+    // Create high_scores table for free mode
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS ${HIGH_SCORES_TABLE} (
+        mode TEXT PRIMARY KEY NOT NULL,
+        score INTEGER NOT NULL DEFAULT 0,
         updated_at INTEGER DEFAULT (strftime('%s', 'now'))
       );
     `);
@@ -233,5 +243,63 @@ export const loadAllStars = async () => {
   } catch (error) {
     console.error('Failed to load all stars:', error);
     return {};
+  }
+};
+
+/**
+ * Load high score for a specific game mode
+ * @param {string} mode - Game mode identifier (e.g., 'free_mode')
+ * @returns {Promise<number>} High score (0 if none)
+ */
+export const loadHighScore = async (mode = 'free_mode') => {
+  try {
+    if (!db) {
+      const initialized = await initDatabase();
+      if (!initialized || !db) return 0;
+    }
+    
+    const row = await db.getFirstAsync(
+      `SELECT score FROM ${HIGH_SCORES_TABLE} WHERE mode = ?`,
+      [mode]
+    );
+    
+    return row ? row.score : 0;
+  } catch (error) {
+    console.error('Failed to load high score:', error);
+    return 0;
+  }
+};
+
+/**
+ * Save high score for a specific game mode
+ * Only updates if new score is higher
+ * @param {number} score - Score to save
+ * @param {string} mode - Game mode identifier (e.g., 'free_mode')
+ * @returns {Promise<boolean>} True if score was updated (new high score)
+ */
+export const saveHighScore = async (score, mode = 'free_mode') => {
+  try {
+    if (!db) {
+      const initialized = await initDatabase();
+      if (!initialized || !db) return false;
+    }
+    
+    const timestamp = Math.floor(Date.now() / 1000);
+    
+    // Only update if new score is higher
+    const result = await db.runAsync(
+      `INSERT INTO ${HIGH_SCORES_TABLE} (mode, score, updated_at) VALUES (?, ?, ?)
+       ON CONFLICT(mode) DO UPDATE SET 
+         score = MAX(${HIGH_SCORES_TABLE}.score, excluded.score),
+         updated_at = CASE WHEN excluded.score > ${HIGH_SCORES_TABLE}.score THEN excluded.updated_at ELSE ${HIGH_SCORES_TABLE}.updated_at END`,
+      [mode, score, timestamp]
+    );
+    
+    // Check if it was actually a new high score
+    const currentHighScore = await loadHighScore(mode);
+    return currentHighScore === score;
+  } catch (error) {
+    console.error('Failed to save high score:', error);
+    return false;
   }
 };

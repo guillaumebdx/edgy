@@ -63,19 +63,23 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     width: '100%',
     aspectRatio: 1,
-    padding: 6,
+    // No padding here - cells handle their own spacing with internal padding
+    // This prevents percentage width calculation issues on large screens
     backgroundColor: '#1A1A1C',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#2A2A2E',
     position: 'relative',
+    alignContent: 'flex-start',
+    justifyContent: 'flex-start',
+    overflow: 'hidden',
   },
   connectionsContainer: {
     position: 'absolute',
-    top: 6,
-    left: 6,
-    right: 6,
-    bottom: 6,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     pointerEvents: 'none',
   },
   menuButton: {
@@ -122,6 +126,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: 'rgba(255, 255, 255, 0.7)',
+  },
+  freeModeHeader: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  freeModeTitleText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: 'rgba(100, 160, 180, 0.9)',
+    fontFamily: 'monospace',
+    letterSpacing: 2,
+  },
+  freeModeHighScoreText: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: 'rgba(255, 215, 0, 0.8)',
+    fontFamily: 'monospace',
+    marginTop: 2,
   },
 });
 

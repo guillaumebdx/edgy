@@ -12,4 +12,6 @@ export {
   saveLevelStars,
   loadLevelStars,
   loadAllStars,
+  loadHighScore,
+  saveHighScore,
 } from './careerStorage';

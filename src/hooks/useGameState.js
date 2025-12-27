@@ -59,9 +59,18 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   const isTutorialLevel = !!tutorial;
 
   // Grid and visual state - use fixed grid for tutorial
-  const [gridData, setGridData] = useState(() => 
-    tutorial?.initialGrid ? [...tutorial.initialGrid] : generateGrid(gridSize, maxValue)
-  );
+  // IMPORTANT: Ensure grid has exactly gridSize*gridSize elements
+  const [gridData, setGridData] = useState(() => {
+    const expectedLength = gridSize * gridSize;
+    if (tutorial?.initialGrid) {
+      const grid = [...tutorial.initialGrid].slice(0, expectedLength);
+      while (grid.length < expectedLength) {
+        grid.push(Math.floor(Math.random() * maxValue) + 1);
+      }
+      return grid;
+    }
+    return generateGrid(gridSize, maxValue);
+  });
   const [exceededCells, setExceededCells] = useState([]);
   const [shakingCells, setShakingCells] = useState([]);
   const [fallingCells, setFallingCells] = useState({});
@@ -137,7 +146,19 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       prevLevelIdRef.current = levelId;
       
       // Reset all game state for new level - use fixed grid for tutorial
-      setGridData(tutorial?.initialGrid ? [...tutorial.initialGrid] : generateGrid(gridSize, maxValue));
+      // IMPORTANT: Ensure grid has exactly gridSize*gridSize elements
+      const expectedLength = gridSize * gridSize;
+      let newGrid;
+      if (tutorial?.initialGrid) {
+        newGrid = [...tutorial.initialGrid].slice(0, expectedLength);
+        // Pad if too short
+        while (newGrid.length < expectedLength) {
+          newGrid.push(Math.floor(Math.random() * maxValue) + 1);
+        }
+      } else {
+        newGrid = generateGrid(gridSize, maxValue);
+      }
+      setGridData(newGrid);
       setScore(0);
       scoreRef.current = 0;
       setCombo(0);
@@ -159,16 +180,17 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       setShakingCells([]);
       setFallingCells({});
     }
-  }, [levelId, gridSize, maxValue, initialStock, initialShuffles]);
+  }, [levelId, gridSize, maxValue, initialStock, initialShuffles, tutorial]);
 
   /**
    * Handles grid layout measurement for touch coordinate conversion
    */
   const handleGridLayout = useCallback((event) => {
     const { width, height } = event.nativeEvent.layout;
-    const padding = GRID_PADDING;
-    const contentWidth = width - padding * 2;
-    const contentHeight = height - padding * 2;
+    // No padding on grid anymore - cells handle their own spacing
+    const padding = 0;
+    const contentWidth = width;
+    const contentHeight = height;
     const currentGridSize = gridSizeRef.current;
     const cellWidth = contentWidth / currentGridSize;
     const cellHeight = contentHeight / currentGridSize;
@@ -574,7 +596,18 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
    */
   const restartGame = useCallback(() => {
     // Use fixed grid for tutorial, random for normal levels
-    setGridData(tutorial?.initialGrid ? [...tutorial.initialGrid] : generateGrid(gridSizeRef.current, maxValueRef.current));
+    // IMPORTANT: Ensure grid has exactly gridSize*gridSize elements
+    const expectedLength = gridSizeRef.current * gridSizeRef.current;
+    let newGrid;
+    if (tutorial?.initialGrid) {
+      newGrid = [...tutorial.initialGrid].slice(0, expectedLength);
+      while (newGrid.length < expectedLength) {
+        newGrid.push(Math.floor(Math.random() * maxValueRef.current) + 1);
+      }
+    } else {
+      newGrid = generateGrid(gridSizeRef.current, maxValueRef.current);
+    }
+    setGridData(newGrid);
     setScore(0);
     scoreRef.current = 0;
     setCombo(0);

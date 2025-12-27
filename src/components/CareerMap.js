@@ -22,46 +22,11 @@ import {
 import { CAREER_LEVELS } from '../careerLevels';
 import SettingsMenu from './SettingsMenu';
 import { loadSoundPreference, setSoundEnabled, isSoundEnabled } from '../sounds';
+import { loadHighScore } from '../persistence';
+import { getLevelImage } from '../levelAssets';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Hardcoded assets for each level (1 unique asset per level)
-const LEVEL_0_IMAGE = require('../../assets/tuto.png'); // Tutorial level
-const LEVEL_1_IMAGE = require('../../assets/led.png');
-const LEVEL_2_IMAGE = require('../../assets/resistance.png');
-const LEVEL_3_IMAGE = require('../../assets/transistor.png');
-const LEVEL_4_IMAGE = require('../../assets/2branches.png');
-const LEVEL_5_IMAGE = require('../../assets/3branches.png');
-const LEVEL_6_IMAGE = require('../../assets/pile.png');
-const LEVEL_7_IMAGE = require('../../assets/wifi.png');
-const LEVEL_8_IMAGE = require('../../assets/_aimant.png');
-const LEVEL_9_IMAGE = require('../../assets/_bobine_magnetique.png');
-const LEVEL_10_IMAGE = require('../../assets/_composant_bleu.png');
-const LEVEL_11_IMAGE = require('../../assets/_concept.png');
-const LEVEL_12_IMAGE = require('../../assets/_condensateur_ic.png');
-const LEVEL_13_IMAGE = require('../../assets/_double_vis_vert.png');
-const LEVEL_14_IMAGE = require('../../assets/_fer_jaune.png');
-const LEVEL_15_IMAGE = require('../../assets/_fusible.png');
-
-// Map level IDs to their specific component images
-const LEVEL_COMPONENTS = {
-  0: LEVEL_0_IMAGE,
-  1: LEVEL_1_IMAGE,
-  2: LEVEL_2_IMAGE,
-  3: LEVEL_3_IMAGE,
-  4: LEVEL_4_IMAGE,
-  5: LEVEL_5_IMAGE,
-  6: LEVEL_6_IMAGE,
-  7: LEVEL_7_IMAGE,
-  8: LEVEL_8_IMAGE,
-  9: LEVEL_9_IMAGE,
-  10: LEVEL_10_IMAGE,
-  11: LEVEL_11_IMAGE,
-  12: LEVEL_12_IMAGE,
-  13: LEVEL_13_IMAGE,
-  14: LEVEL_14_IMAGE,
-  15: LEVEL_15_IMAGE,
-};
 
 /**
  * Stars display component
@@ -98,7 +63,7 @@ const LevelNode = ({
   onPress,
   position,
 }) => {
-  const componentImage = LEVEL_COMPONENTS[level.id];
+  const componentImage = getLevelImage(level.id);
   
   const handlePress = () => {
     if (!isLocked && onPress) {
@@ -266,6 +231,7 @@ const CareerMap = ({
   onSelectLevel,
   onNewGame,
   onDebugSetLevel,
+  onFreeMode,
 }) => {
   // Settings menu state
   const [showSettings, setShowSettings] = useState(false);
@@ -273,6 +239,9 @@ const CareerMap = ({
   
   // Debug menu state
   const [showDebugMenu, setShowDebugMenu] = useState(false);
+  
+  // Free mode high score
+  const [freeHighScore, setFreeHighScore] = useState(0);
 
   // Load sound preference on mount
   useEffect(() => {
@@ -282,6 +251,17 @@ const CareerMap = ({
     };
     loadPreference();
   }, []);
+  
+  // Load high score only after DB is initialized (isLoading becomes false)
+  useEffect(() => {
+    if (!isLoading) {
+      const loadScore = async () => {
+        const highScore = await loadHighScore('free_mode');
+        setFreeHighScore(highScore);
+      };
+      loadScore();
+    }
+  }, [isLoading]);
 
   const handleToggleSound = async () => {
     const newValue = !soundEnabled;
@@ -409,6 +389,19 @@ const CareerMap = ({
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Free Mode card at top */}
+        <TouchableOpacity 
+          style={styles.freeModeCard} 
+          onPress={onFreeMode}
+          activeOpacity={0.8}
+        >
+          <View style={styles.freeModeCardContent}>
+            <Text style={styles.freeModeCardTitle}>🎮 Mode Libre</Text>
+            <Text style={styles.freeModeCardHighScore}>High Score : {freeHighScore.toLocaleString()}</Text>
+          </View>
+          <Text style={styles.freeModeCardArrow}>›</Text>
+        </TouchableOpacity>
+
         {/* Circuit path */}
         <View style={styles.circuitPath}>
           {CAREER_LEVELS.map((level, index) => {
@@ -496,6 +489,38 @@ const styles = StyleSheet.create({
   },
   settingsIcon: {
     fontSize: 24,
+  },
+  freeModeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    padding: 14,
+    backgroundColor: 'rgba(100, 160, 180, 0.15)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 160, 180, 0.5)',
+  },
+  freeModeCardContent: {
+    flex: 1,
+  },
+  freeModeCardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: 'rgba(100, 180, 220, 0.95)',
+    marginBottom: 4,
+  },
+  freeModeCardHighScore: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255, 215, 0, 0.9)',
+    fontFamily: 'monospace',
+  },
+  freeModeCardArrow: {
+    fontSize: 32,
+    fontWeight: '300',
+    color: 'rgba(100, 160, 180, 0.7)',
+    marginLeft: 12,
   },
   scrollView: {
     flex: 1,
