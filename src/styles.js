@@ -145,6 +145,23 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
     marginTop: 2,
   },
+  tutorialHintContainer: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  tutorialHintText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFD700',
+    textAlign: 'center',
+    textShadowColor: 'rgba(255, 215, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
 });
 
 export default styles;

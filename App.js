@@ -62,6 +62,7 @@ const FREE_MODE_CONFIG = {
   stock: 20,
   shuffles: 2,
   targetScore: null, // No target - play for high score
+  isFreeMode: true, // Enable free mode challenges (row/column bonus)
 };
 
 /**
@@ -260,44 +261,6 @@ export default function App() {
   }, [isFreeModeActive, score]);
 
   /**
-   * Handle game over - process level completion
-   * Uses levelComplete from useGameState (set when target score is reached)
-   */
-  const handleGameOver = useCallback(async () => {
-    // Free mode: save high score and show result
-    if (isFreeModeActive) {
-      const isNewHighScore = await saveHighScore(score, 'free_mode');
-      const currentHighScore = await loadHighScore('free_mode');
-      setFreeHighScore(currentHighScore);
-      setLevelResult({
-        success: false,
-        careerCompleted: false,
-        isFreeMode: true,
-        isNewHighScore: isNewHighScore && score > 0,
-        highScore: currentHighScore,
-        message: isNewHighScore && score > 0 ? 'Nouveau Record !' : 'Partie terminée',
-      });
-      return;
-    }
-    
-    if (levelComplete) {
-      // Target score reached - process as success with challenge status
-      const result = await processRunEnd(score, challengeCompleted);
-      result.targetScore = playingLevel?.targetScore;
-      setLevelResult(result);
-    } else {
-      // Game over without reaching target - failure
-      setLevelResult({
-        success: false,
-        careerCompleted: false,
-        message: 'Score insuffisant',
-        targetScore: playingLevel?.targetScore,
-        starsEarned: 0,
-      });
-    }
-  }, [score, levelComplete, challengeCompleted, processRunEnd, playingLevel, isFreeModeActive]);
-
-  /**
    * Restart current level
    */
   const handleRestart = useCallback(() => {
@@ -316,11 +279,47 @@ export default function App() {
   }, [advanceToNextLevel]);
 
   // Process level completion when game ends
+  // IMPORTANT: We pass levelComplete directly to avoid stale closure issues
+  // The useEffect captures the current value of levelComplete at the time it runs
   useEffect(() => {
     if (gameOver && !levelResult && (currentScreen === SCREENS.GAME || currentScreen === SCREENS.FREE_MODE)) {
-      handleGameOver();
+      // Inline the logic here to use fresh values instead of stale closure in handleGameOver
+      const processGameOver = async () => {
+        // Free mode: save high score and show result
+        if (isFreeModeActive) {
+          const isNewHighScore = await saveHighScore(score, 'free_mode');
+          const currentHighScore = await loadHighScore('free_mode');
+          setFreeHighScore(currentHighScore);
+          setLevelResult({
+            success: false,
+            careerCompleted: false,
+            isFreeMode: true,
+            isNewHighScore: isNewHighScore && score > 0,
+            highScore: currentHighScore,
+            message: isNewHighScore && score > 0 ? 'Nouveau Record !' : 'Partie terminée',
+          });
+          return;
+        }
+        
+        if (levelComplete) {
+          // Target score reached - process as success with challenge status
+          const result = await processRunEnd(score, challengeCompleted);
+          result.targetScore = playingLevel?.targetScore;
+          setLevelResult(result);
+        } else {
+          // Game over without reaching target - failure
+          setLevelResult({
+            success: false,
+            careerCompleted: false,
+            message: 'Score insuffisant',
+            targetScore: playingLevel?.targetScore,
+            starsEarned: 0,
+          });
+        }
+      };
+      processGameOver();
     }
-  }, [gameOver, levelResult, handleGameOver, currentScreen]);
+  }, [gameOver, levelComplete, levelResult, currentScreen, isFreeModeActive, score, challengeCompleted, processRunEnd, playingLevel]);
 
   // Wrapped gesture handlers that block during entry animation
   const wrappedGestureBegin = useCallback((x, y) => {
@@ -391,6 +390,13 @@ export default function App() {
 
       {/* Path selection counter - absolute positioned */}
       <PathCounter count={path.length} />
+
+      {/* Tutorial hint text - above dashboard (stays visible during entire step) */}
+      {isTutorialLevel && tutorialState.hint && !gameOver && (
+        <View style={styles.tutorialHintContainer}>
+          <Text style={styles.tutorialHintText}>{tutorialState.hint}</Text>
+        </View>
+      )}
 
       {/* Level info display */}
       {isFreeModeActive ? (

@@ -219,6 +219,61 @@ export const removeExceededCells = (grid) => {
 };
 
 /**
+ * Check if any column is entirely filled with identical values (any value)
+ * Used for free mode challenge detection
+ * @param {number[]} grid - Current grid
+ * @param {number} gridSize - Size of the grid
+ * @returns {{col: number, value: number}|null} Column index and value if found, null otherwise
+ */
+export const checkColumnOfIdenticalValues = (grid, gridSize = GRID_SIZE) => {
+  for (let col = 0; col < gridSize; col++) {
+    const firstValue = grid[col];
+    if (firstValue === null) continue;
+    
+    let isFullColumn = true;
+    for (let row = 1; row < gridSize; row++) {
+      const index = row * gridSize + col;
+      if (grid[index] !== firstValue) {
+        isFullColumn = false;
+        break;
+      }
+    }
+    if (isFullColumn) {
+      return { col, value: firstValue };
+    }
+  }
+  return null;
+};
+
+/**
+ * Check if any row is entirely filled with identical values (any value)
+ * Used for free mode challenge detection
+ * @param {number[]} grid - Current grid
+ * @param {number} gridSize - Size of the grid
+ * @returns {{row: number, value: number}|null} Row index and value if found, null otherwise
+ */
+export const checkRowOfIdenticalValues = (grid, gridSize = GRID_SIZE) => {
+  for (let row = 0; row < gridSize; row++) {
+    const firstIndex = row * gridSize;
+    const firstValue = grid[firstIndex];
+    if (firstValue === null) continue;
+    
+    let isFullRow = true;
+    for (let col = 1; col < gridSize; col++) {
+      const index = row * gridSize + col;
+      if (grid[index] !== firstValue) {
+        isFullRow = false;
+        break;
+      }
+    }
+    if (isFullRow) {
+      return { row, value: firstValue };
+    }
+  }
+  return null;
+};
+
+/**
  * Check if any column is entirely filled with a specific value
  * Used for challenge detection (e.g., column of 5s)
  * @param {number[]} grid - Current grid

@@ -166,13 +166,6 @@ const TutorialOverlay = ({
           delay={index * 100}
         />
       ))}
-
-      {/* Hint text at top */}
-      {hint && (
-        <View style={styles.hintContainer}>
-          <Text style={styles.hintText}>{hint}</Text>
-        </View>
-      )}
     </View>
   );
 };
@@ -200,26 +193,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 6,
     elevation: 5,
-  },
-  hintContainer: {
-    position: 'absolute',
-    top: -50,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  hintText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFD700',
-    textAlign: 'center',
-    textShadowColor: 'rgba(255, 215, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
   },
 });
 

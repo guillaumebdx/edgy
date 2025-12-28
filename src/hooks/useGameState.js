@@ -26,6 +26,8 @@ import {
   getCellFromPosition,
   checkColumnOfValue,
   checkRowOfValue,
+  checkColumnOfIdenticalValues,
+  checkRowOfIdenticalValues,
 } from '../gameLogic';
 import { CHALLENGE_TYPES } from '../careerLevels';
 import {
@@ -53,6 +55,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   const initialStock = levelConfig?.stock || DEFAULT_STOCK;
   const targetScore = levelConfig?.targetScore || null;
   const initialShuffles = levelConfig?.shuffles || 0;
+  const isFreeMode = levelConfig?.isFreeMode || false;
   
   // Tutorial configuration
   const tutorial = levelConfig?.tutorial || null;
@@ -107,6 +110,9 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   
   // Score ref for centralized game end checking
   const scoreRef = useRef(0);
+  
+  // Game over ref to prevent race conditions in async callbacks
+  const gameOverRef = useRef(false);
 
   // Feedback state
   const [floatingScore, setFloatingScore] = useState({ visible: false, text: '', key: 0 });
@@ -165,6 +171,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       stockRef.current = initialStock;
       setStock(initialStock);
       setGameOver(false);
+      gameOverRef.current = false;
       setLevelComplete(false);
       setChallengeCompleted(false);
       setChallengeColumn(null);
@@ -278,11 +285,12 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
    * @param {number} currentScore - The current score (passed explicitly to avoid stale refs)
    */
   const checkGameEnd = useCallback((currentGrid, currentScore) => {
-    // Skip if already game over
-    if (gameOver) return;
+    // Skip if already game over - use REF to avoid stale closure issues
+    if (gameOverRef.current) return;
     
     // PRIORITY 1: Check for victory (score >= target) - applies to ALL levels including tutorial
     if (targetScoreRef.current && currentScore >= targetScoreRef.current) {
+      gameOverRef.current = true; // Set ref FIRST to prevent race conditions
       setLevelComplete(true);
       setGameOver(true);
       setNoMovesAvailable(false);
@@ -298,6 +306,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     if (!hasMoves) {
       // PRIORITY 2: No moves + no shuffles = DEFEAT
       if (shufflesRemainingRef.current === 0) {
+        gameOverRef.current = true; // Set ref FIRST to prevent race conditions
         setLevelComplete(false);
         setGameOver(true);
         setNoMovesAvailable(false);
@@ -310,7 +319,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       // PRIORITY 4: Game continues
       setNoMovesAvailable(false);
     }
-  }, [gameOver, isTutorialLevel, showNoMovesMessage]);
+  }, [isTutorialLevel, showNoMovesMessage]);
 
   /**
    * Check if challenge is completed on current grid
@@ -323,7 +332,53 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     challengeCompletedRef.current = challengeCompleted;
   }, [challengeCompleted]);
   
-  const checkChallenge = useCallback((grid) => {
+  /**
+   * Triggers challenge celebration and effects
+   * @param {number|null} colOrRow - Column index (positive) or row index (negative: -(row+1))
+   */
+  const triggerChallengeSuccess = useCallback((colOrRow, bonusPoints = 0) => {
+    setChallengeColumn(colOrRow);
+    // Show celebration for challenge completion
+    const celebrationText = bonusPoints > 0 ? `⭐ +${bonusPoints} BONUS! ⭐` : '⭐ CHALLENGE! ⭐';
+    setCelebration({ visible: true, text: celebrationText, key: Date.now() });
+    setTimeout(
+      () => setCelebration((prev) => ({ ...prev, visible: false })),
+      ANIMATION.CELEBRATION_DURATION
+    );
+    // Clear highlight after 1 second
+    setTimeout(() => setChallengeColumn(null), 1000);
+    // Haptic feedback for challenge
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    // Play challenge success sound
+    playChallengeSound();
+    
+    // Award bonus points if specified
+    if (bonusPoints > 0) {
+      const newScore = scoreRef.current + bonusPoints;
+      scoreRef.current = newScore;
+      setScore(newScore);
+    }
+  }, []);
+
+  const checkChallenge = useCallback((grid, isFreeMode = false) => {
+    // FREE MODE: Check for any row/column of identical values
+    if (isFreeMode) {
+      // Check columns
+      const colResult = checkColumnOfIdenticalValues(grid, gridSizeRef.current);
+      if (colResult !== null) {
+        triggerChallengeSuccess(colResult.col, 500);
+        return;
+      }
+      // Check rows
+      const rowResult = checkRowOfIdenticalValues(grid, gridSizeRef.current);
+      if (rowResult !== null) {
+        triggerChallengeSuccess(-(rowResult.row + 1), 500);
+        return;
+      }
+      return;
+    }
+    
+    // CAREER MODE: Check specific challenge type
     const currentChallenge = challengeRef.current;
     if (!currentChallenge) return;
     
@@ -335,53 +390,45 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       if (col !== null) {
         setChallengeCompleted(true);
         challengeCompletedRef.current = true;
-        setChallengeColumn(col);
-        // Show celebration for challenge completion
-        setCelebration({ visible: true, text: '⭐ CHALLENGE! ⭐', key: Date.now() });
-        setTimeout(
-          () => setCelebration((prev) => ({ ...prev, visible: false })),
-          ANIMATION.CELEBRATION_DURATION
-        );
-        // Clear column highlight after 1 second
-        setTimeout(() => setChallengeColumn(null), 1000);
-        // Haptic feedback for challenge
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        // Play challenge success sound
-        playChallengeSound();
+        triggerChallengeSuccess(col);
       }
     } else if (currentChallenge.type === CHALLENGE_TYPES.ROW_OF_FIVES) {
       const row = checkRowOfValue(grid, 5, gridSizeRef.current);
       if (row !== null) {
         setChallengeCompleted(true);
         challengeCompletedRef.current = true;
-        // Store row as negative to differentiate from column (row 0 = -1, row 1 = -2, etc.)
-        setChallengeColumn(-(row + 1));
-        // Show celebration for challenge completion
-        setCelebration({ visible: true, text: '⭐ CHALLENGE! ⭐', key: Date.now() });
-        setTimeout(
-          () => setCelebration((prev) => ({ ...prev, visible: false })),
-          ANIMATION.CELEBRATION_DURATION
-        );
-        // Clear row highlight after 1 second
-        setTimeout(() => setChallengeColumn(null), 1000);
-        // Haptic feedback for challenge
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        // Play challenge success sound
-        playChallengeSound();
+        triggerChallengeSuccess(-(row + 1));
       }
     }
-  }, []);
+  }, [triggerChallengeSuccess]);
 
   /**
    * Adds a cell to the current path if valid
+   * Also handles backtracking: if user slides back to a previous cell in the path,
+   * truncate the path to that cell (allowing undo of selections)
    */
   const addCellToPath = useCallback((cellIndex, currentGridData) => {
     if (cellIndex === null) return;
-    if (pathRef.current.includes(cellIndex)) return;
+    
+    const currentPath = pathRef.current;
+    
+    // Check if this cell is already in the path (potential backtrack)
+    const existingIndex = currentPath.indexOf(cellIndex);
+    if (existingIndex !== -1) {
+      // If it's not the last cell, this is a backtrack - truncate path to this cell
+      if (existingIndex < currentPath.length - 1) {
+        pathRef.current = currentPath.slice(0, existingIndex + 1);
+        setPath([...pathRef.current]);
+        // Validate tutorial path after backtrack
+        tutorialHandlers?.validateTutorialPath?.(pathRef.current);
+      }
+      // If it's the last cell, do nothing (finger still on same cell)
+      return;
+    }
 
     // Check adjacency if not first cell
-    if (pathRef.current.length > 0) {
-      const lastCell = pathRef.current[pathRef.current.length - 1];
+    if (currentPath.length > 0) {
+      const lastCell = currentPath[currentPath.length - 1];
       if (!areAdjacent(lastCell, cellIndex, gridSizeRef.current)) {
         return;
       }
@@ -392,7 +439,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       return;
     }
 
-    pathRef.current = [...pathRef.current, cellIndex];
+    pathRef.current = [...currentPath, cellIndex];
     setPath([...pathRef.current]);
     
     // Validate tutorial path (hides guide when player starts correct path)
@@ -505,7 +552,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
                 isResolvingRef.current = false;
                 
                 // Check challenge after gravity settles
-                checkChallenge(newGrid);
+                checkChallenge(newGrid, isFreeMode);
 
                 // CENTRALIZED GAME END CHECK - called AFTER all animations complete
                 checkGameEnd(newGrid, scoreRef.current);
@@ -534,7 +581,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
         // Check challenge and game end
         setGridData((currentGrid) => {
           // Check challenge after transformation
-          checkChallenge(currentGrid);
+          checkChallenge(currentGrid, isFreeMode);
           
           // CENTRALIZED GAME END CHECK - scoreRef.current is already updated
           checkGameEnd(currentGrid, scoreRef.current);
@@ -614,6 +661,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     stockRef.current = initialStock;
     setStock(initialStock);
     setGameOver(false);
+    gameOverRef.current = false;
     setLevelComplete(false);
     setChallengeCompleted(false);
     setChallengeColumn(null);
