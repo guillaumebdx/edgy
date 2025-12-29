@@ -138,6 +138,7 @@ export default function App() {
     path,
     gridLayout,
     score,
+    finalScore, // AUTHORITATIVE score at game over moment
     combo,
     stock,
     gameOver,
@@ -278,33 +279,50 @@ export default function App() {
     await advanceToNextLevel();
   }, [advanceToNextLevel]);
 
+  /**
+   * Handle victory override - called by GameOverScreen when it detects
+   * score >= target but levelResult said failure (race condition recovery)
+   */
+  const handleVictoryOverride = useCallback(async (overrideScore) => {
+    if (isFreeModeActive) return; // Free mode doesn't need this
+    
+    // Save progression that was missed due to race condition
+    const result = await processRunEnd(overrideScore, challengeCompleted);
+    result.targetScore = playingLevel?.targetScore;
+    setLevelResult(result);
+  }, [isFreeModeActive, processRunEnd, challengeCompleted, playingLevel]);
+
   // Process level completion when game ends
-  // IMPORTANT: We pass levelComplete directly to avoid stale closure issues
-  // The useEffect captures the current value of levelComplete at the time it runs
+  // ROBUST FIX: Use finalScore which is captured at the EXACT moment of game over
+  // This eliminates ALL race conditions - finalScore is set synchronously with gameOver
   useEffect(() => {
-    if (gameOver && !levelResult && (currentScreen === SCREENS.GAME || currentScreen === SCREENS.FREE_MODE)) {
-      // Inline the logic here to use fresh values instead of stale closure in handleGameOver
+    // Wait for BOTH gameOver AND finalScore to be set (they are set together in checkGameEnd)
+    if (gameOver && finalScore !== null && !levelResult && (currentScreen === SCREENS.GAME || currentScreen === SCREENS.FREE_MODE)) {
       const processGameOver = async () => {
         // Free mode: save high score and show result
         if (isFreeModeActive) {
-          const isNewHighScore = await saveHighScore(score, 'free_mode');
+          const isNewHighScore = await saveHighScore(finalScore, 'free_mode');
           const currentHighScore = await loadHighScore('free_mode');
           setFreeHighScore(currentHighScore);
           setLevelResult({
             success: false,
             careerCompleted: false,
             isFreeMode: true,
-            isNewHighScore: isNewHighScore && score > 0,
+            isNewHighScore: isNewHighScore && finalScore > 0,
             highScore: currentHighScore,
-            message: isNewHighScore && score > 0 ? 'Nouveau Record !' : 'Partie terminée',
+            message: isNewHighScore && finalScore > 0 ? 'Nouveau Record !' : 'Partie terminée',
           });
           return;
         }
         
-        if (levelComplete) {
+        // ROBUST: Use finalScore (captured at game over moment) to check victory
+        const targetScore = playingLevel?.targetScore;
+        const isVictory = targetScore && finalScore >= targetScore;
+        
+        if (isVictory) {
           // Target score reached - process as success with challenge status
-          const result = await processRunEnd(score, challengeCompleted);
-          result.targetScore = playingLevel?.targetScore;
+          const result = await processRunEnd(finalScore, challengeCompleted);
+          result.targetScore = targetScore;
           setLevelResult(result);
         } else {
           // Game over without reaching target - failure
@@ -312,14 +330,14 @@ export default function App() {
             success: false,
             careerCompleted: false,
             message: 'Score insuffisant',
-            targetScore: playingLevel?.targetScore,
+            targetScore: targetScore,
             starsEarned: 0,
           });
         }
       };
       processGameOver();
     }
-  }, [gameOver, levelComplete, levelResult, currentScreen, isFreeModeActive, score, challengeCompleted, processRunEnd, playingLevel]);
+  }, [gameOver, finalScore, levelResult, currentScreen, isFreeModeActive, challengeCompleted, processRunEnd, playingLevel]);
 
   // Wrapped gesture handlers that block during entry animation
   const wrappedGestureBegin = useCallback((x, y) => {
@@ -574,8 +592,9 @@ export default function App() {
         <GameOverScreen 
           score={score} 
           onRestart={handleRestart}
-          levelResult={levelResult || { success: false, message: 'Partie terminée' }}
-          onNextLevel={levelResult?.success && !levelResult?.careerCompleted && !isFreeModeActive ? handleNextLevel : null}
+          levelResult={levelResult || { success: false, message: 'Partie terminée', targetScore: playingLevel?.targetScore }}
+          onNextLevel={!isFreeModeActive && !levelResult?.careerCompleted ? handleNextLevel : null}
+          onVictoryOverride={handleVictoryOverride}
         />
       )}
       </ImageBackground>

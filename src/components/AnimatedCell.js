@@ -217,9 +217,16 @@ const AnimatedCell = ({
           {/* Subtle top gradient for depth */}
           <View style={[styles.cellGradientTop, { backgroundColor: currentColor.top }]} />
           
+          {/* Inner glow when selected - light from center */}
+          {isInPath && (
+            <View style={styles.innerGlow}>
+              <View style={styles.innerGlowCore} />
+            </View>
+          )}
+          
           {/* Cell value - technical typography */}
           {showValue && (
-            <Text style={[styles.cellText, isExceeded && styles.cellTextExceeded]}>
+            <Text style={[styles.cellText, isExceeded && styles.cellTextExceeded, isInPath && styles.cellTextActive]}>
               {value > MAX_VALUE ? `${value}` : value}
             </Text>
           )}
@@ -321,6 +328,32 @@ const styles = StyleSheet.create({
   cellTextExceeded: {
     color: '#FFFFFF',
     textShadowColor: 'rgba(255, 100, 100, 0.4)',
+  },
+  cellTextActive: {
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(150, 220, 255, 0.8)',
+    textShadowRadius: 6,
+  },
+  innerGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 0,
+  },
+  innerGlowCore: {
+    width: '80%',
+    height: '80%',
+    borderRadius: 100,
+    backgroundColor: 'rgba(150, 220, 255, 0.35)',
+    shadowColor: '#96DCFF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 15,
+    elevation: 10,
   },
   pathIndicator: {
     position: 'absolute',

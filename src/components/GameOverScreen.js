@@ -4,7 +4,7 @@
  * Shows level completion status in career mode
  */
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { formatScore } from '../scoreManager';
 
@@ -13,9 +13,34 @@ const GameOverScreen = ({
   onRestart, 
   levelResult = null,
   onNextLevel = null,
+  onVictoryOverride = null, // Called when we detect score >= target but levelResult said failure
 }) => {
-  const isLevelComplete = levelResult?.success;
+  // BULLETPROOF FIX: If score >= target, it's ALWAYS a victory, regardless of what levelResult says
+  // This is the final safety net against any race condition bugs
+  const targetScore = levelResult?.targetScore;
+  const scoreReachedTarget = targetScore && score >= targetScore;
+  
+  // Force victory if score >= target, even if levelResult.success is false (race condition bug)
+  const isLevelComplete = scoreReachedTarget || levelResult?.success;
   const isCareerComplete = levelResult?.careerCompleted;
+  
+  // Track if we've already called the override to prevent multiple calls
+  const hasCalledOverride = useRef(false);
+  
+  // Determine the message to show
+  let displayMessage = levelResult?.message;
+  const isRaceConditionDetected = scoreReachedTarget && !levelResult?.success;
+  if (isRaceConditionDetected) {
+    displayMessage = 'Niveau réussi !';
+  }
+  
+  // Call victory override once when race condition is detected
+  useEffect(() => {
+    if (isRaceConditionDetected && onVictoryOverride && !hasCalledOverride.current) {
+      hasCalledOverride.current = true;
+      onVictoryOverride(score);
+    }
+  }, [isRaceConditionDetected, onVictoryOverride, score]);
   
   return (
     <View style={styles.overlay}>
@@ -26,7 +51,7 @@ const GameOverScreen = ({
             styles.resultMessage,
             isLevelComplete ? styles.successMessage : styles.failMessage
           ]}>
-            {levelResult.message}
+            {displayMessage}
           </Text>
         )}
         

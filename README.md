@@ -10,12 +10,14 @@ Reliez des cases identiques sur une grille de circuit électronique, fusionnez-l
 
 ## 🎮 Fonctionnalités
 
-- **Tutoriel interactif** — Apprenez les mécaniques pas à pas
+- **Tutoriel interactif** — Apprenez les mécaniques pas à pas avec guide visuel
 - **8 niveaux** de difficulté progressive (4×4 → 7×7)
+- **Mode Libre** — Jouez sans limite pour battre votre high score
 - **Système d'étoiles** — Jusqu'à 3★ par niveau avec challenges
 - **Animation d'entrée** — Les blocs tombent et s'illuminent à chaque niveau
 - **Carte de carrière** — Circuit imprimé avec composants électroniques
 - **Effets sonores** — Validation, erreur, chute + musique de fond
+- **Retour haptique** — Vibrations pour les actions importantes
 - **Menu paramètres** — Son, crédits, réinitialisation
 - **Sauvegarde automatique** — Progression persistante (SQLite)
 
@@ -28,6 +30,7 @@ Reliez des cases identiques sur une grille de circuit électronique, fusionnez-l
 2. **Relâchez** pour valider le chemin
 3. Si **longueur du chemin > valeur** → les cases fusionnent
 4. Si la **nouvelle valeur > MAX** → destruction !
+5. **Demi-tour** — Revenez sur la case précédente pour annuler
 
 ### Exemple
 - 4 cases de valeur 3 → fusionnent en valeur 4
@@ -37,11 +40,17 @@ Reliez des cases identiques sur une grille de circuit électronique, fusionnez-l
 - Les cases au-dessus tombent après destruction
 - De nouvelles cases arrivent depuis le stock
 - Stock vide + aucun coup possible = Game Over
+- **Shuffle** disponible quand bloqué (limité)
 
 ### Score
 - Points = longueur² × cases × combo
 - Combos pour destructions consécutives
 - Célébrations pour performances exceptionnelles
+
+### Mode Libre
+- Pas d'objectif de score — jouez pour le high score
+- **Bonus +500 points** pour chaque ligne/colonne de valeurs identiques
+- Le bonus ne se déclenche qu'une fois par ligne/colonne (jusqu'à ce qu'elle soit cassée)
 
 ---
 

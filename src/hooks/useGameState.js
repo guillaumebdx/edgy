@@ -113,6 +113,14 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   
   // Game over ref to prevent race conditions in async callbacks
   const gameOverRef = useRef(false);
+  
+  // Store the final score at the moment of game over - this is the AUTHORITATIVE score
+  // This eliminates race conditions where React state might be stale
+  const [finalScore, setFinalScore] = useState(null);
+  
+  // Track completed free mode challenges (rows/columns already awarded bonus)
+  // Format: Set of strings like "col-0", "col-1", "row-0", "row-1", etc.
+  const completedFreeChallengesRef = useRef(new Set());
 
   // Feedback state
   const [floatingScore, setFloatingScore] = useState({ visible: false, text: '', key: 0 });
@@ -172,6 +180,8 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       setStock(initialStock);
       setGameOver(false);
       gameOverRef.current = false;
+      setFinalScore(null);
+      completedFreeChallengesRef.current = new Set();
       setLevelComplete(false);
       setChallengeCompleted(false);
       setChallengeColumn(null);
@@ -291,6 +301,8 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     // PRIORITY 1: Check for victory (score >= target) - applies to ALL levels including tutorial
     if (targetScoreRef.current && currentScore >= targetScoreRef.current) {
       gameOverRef.current = true; // Set ref FIRST to prevent race conditions
+      // CRITICAL: Store the final score at this exact moment - this is AUTHORITATIVE
+      setFinalScore(currentScore);
       setLevelComplete(true);
       setGameOver(true);
       setNoMovesAvailable(false);
@@ -307,6 +319,8 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       // PRIORITY 2: No moves + no shuffles = DEFEAT
       if (shufflesRemainingRef.current === 0) {
         gameOverRef.current = true; // Set ref FIRST to prevent race conditions
+        // CRITICAL: Store the final score at this exact moment - this is AUTHORITATIVE
+        setFinalScore(currentScore);
         setLevelComplete(false);
         setGameOver(true);
         setNoMovesAvailable(false);
@@ -361,19 +375,59 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   }, []);
 
   const checkChallenge = useCallback((grid, isFreeMode = false) => {
-    // FREE MODE: Check for any row/column of identical values
+    // FREE MODE: Check for any NEW row/column of identical values
     if (isFreeMode) {
-      // Check columns
-      const colResult = checkColumnOfIdenticalValues(grid, gridSizeRef.current);
-      if (colResult !== null) {
-        triggerChallengeSuccess(colResult.col, 500);
-        return;
+      // Check all columns for identical values
+      for (let col = 0; col < gridSizeRef.current; col++) {
+        const key = `col-${col}`;
+        const firstValue = grid[col];
+        if (firstValue === null) continue;
+        
+        let isFullColumn = true;
+        for (let row = 1; row < gridSizeRef.current; row++) {
+          const index = row * gridSizeRef.current + col;
+          if (grid[index] !== firstValue) {
+            isFullColumn = false;
+            break;
+          }
+        }
+        
+        if (isFullColumn && !completedFreeChallengesRef.current.has(key)) {
+          // New completed column - award bonus
+          completedFreeChallengesRef.current.add(key);
+          triggerChallengeSuccess(col, 500);
+          return;
+        } else if (!isFullColumn && completedFreeChallengesRef.current.has(key)) {
+          // Column is no longer complete - remove from tracked
+          completedFreeChallengesRef.current.delete(key);
+        }
       }
-      // Check rows
-      const rowResult = checkRowOfIdenticalValues(grid, gridSizeRef.current);
-      if (rowResult !== null) {
-        triggerChallengeSuccess(-(rowResult.row + 1), 500);
-        return;
+      
+      // Check all rows for identical values
+      for (let row = 0; row < gridSizeRef.current; row++) {
+        const key = `row-${row}`;
+        const firstIndex = row * gridSizeRef.current;
+        const firstValue = grid[firstIndex];
+        if (firstValue === null) continue;
+        
+        let isFullRow = true;
+        for (let col = 1; col < gridSizeRef.current; col++) {
+          const index = row * gridSizeRef.current + col;
+          if (grid[index] !== firstValue) {
+            isFullRow = false;
+            break;
+          }
+        }
+        
+        if (isFullRow && !completedFreeChallengesRef.current.has(key)) {
+          // New completed row - award bonus
+          completedFreeChallengesRef.current.add(key);
+          triggerChallengeSuccess(-(row + 1), 500);
+          return;
+        } else if (!isFullRow && completedFreeChallengesRef.current.has(key)) {
+          // Row is no longer complete - remove from tracked
+          completedFreeChallengesRef.current.delete(key);
+        }
       }
       return;
     }
@@ -404,25 +458,28 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
 
   /**
    * Adds a cell to the current path if valid
-   * Also handles backtracking: if user slides back to a previous cell in the path,
-   * truncate the path to that cell (allowing undo of selections)
+   * Also handles backtracking: if user slides back to the PREVIOUS cell only
    */
   const addCellToPath = useCallback((cellIndex, currentGridData) => {
     if (cellIndex === null) return;
     
     const currentPath = pathRef.current;
     
-    // Check if this cell is already in the path (potential backtrack)
-    const existingIndex = currentPath.indexOf(cellIndex);
-    if (existingIndex !== -1) {
-      // If it's not the last cell, this is a backtrack - truncate path to this cell
-      if (existingIndex < currentPath.length - 1) {
-        pathRef.current = currentPath.slice(0, existingIndex + 1);
+    // Check if this is the previous cell (backtrack by one step only)
+    if (currentPath.length >= 2) {
+      const previousCell = currentPath[currentPath.length - 2];
+      if (cellIndex === previousCell) {
+        // Backtrack: remove the last cell
+        pathRef.current = currentPath.slice(0, -1);
         setPath([...pathRef.current]);
         // Validate tutorial path after backtrack
         tutorialHandlers?.validateTutorialPath?.(pathRef.current);
+        return;
       }
-      // If it's the last cell, do nothing (finger still on same cell)
+    }
+    
+    // If cell is already in path (but not the previous one), ignore
+    if (currentPath.includes(cellIndex)) {
       return;
     }
 
@@ -662,6 +719,8 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     setStock(initialStock);
     setGameOver(false);
     gameOverRef.current = false;
+    setFinalScore(null);
+    completedFreeChallengesRef.current = new Set();
     setLevelComplete(false);
     setChallengeCompleted(false);
     setChallengeColumn(null);
@@ -714,6 +773,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     path,
     gridLayout,
     score,
+    finalScore, // AUTHORITATIVE score at game over moment
     combo,
     stock,
     gameOver,
