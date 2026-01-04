@@ -136,7 +136,7 @@ const LevelInfo = ({
                   styles.gaugeValue,
                   currentScore > highScore && highScore > 0 && styles.gaugeValueComplete,
                 ]}>
-                  {currentScore.toLocaleString()}{highScore > 0 ? ` / ${highScore.toLocaleString()}` : ''}
+                  {currentScore.toLocaleString('fr-FR')}{highScore > 0 ? ` / ${highScore.toLocaleString('fr-FR')}` : ''}
                 </Text>
               </View>
               <View style={styles.gaugeTrack}>
@@ -160,7 +160,7 @@ const LevelInfo = ({
                   scoreProgress >= 1 && styles.gaugeValueComplete,
                   isTutorialLastStep && styles.objectifHighlight,
                 ]}>
-                  {currentScore.toLocaleString()} / {targetScore.toLocaleString()}
+                  {currentScore.toLocaleString('fr-FR')} / {targetScore.toLocaleString('fr-FR')}
                 </Animated.Text>
               </View>
               <View style={styles.gaugeTrack}>
@@ -176,7 +176,7 @@ const LevelInfo = ({
             <View style={[styles.gaugeContainer, styles.gaugeContainerScore]}>
               <View style={styles.gaugeHeader}>
                 <Text style={styles.gaugeLabel}>SCORE</Text>
-                <Text style={styles.gaugeValue}>{currentScore.toLocaleString()}</Text>
+                <Text style={styles.gaugeValue}>{currentScore.toLocaleString('fr-FR')}</Text>
               </View>
               <View style={styles.gaugeTrack}>
                 <View style={[styles.gaugeFill, styles.gaugeFillFree, { width: '100%' }]} />

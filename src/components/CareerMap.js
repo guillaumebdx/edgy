@@ -402,7 +402,7 @@ const CareerMap = ({
             {freeHighScore > 0 && (
               <View style={styles.freeModeHighScoreRow}>
                 <Text style={styles.freeModeHighScoreLabel}>Meilleur score :</Text>
-                <Text style={styles.freeModeCardHighScore}>{freeHighScore.toLocaleString()}</Text>
+                <Text style={styles.freeModeCardHighScore}>{freeHighScore.toLocaleString('fr-FR')}</Text>
               </View>
             )}
           </View>

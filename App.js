@@ -477,7 +477,7 @@ export default function App() {
             shouldBlinkScore && { color: '#70D0B0' },
             shouldBlinkScore && scoreBlinkStyle,
           ]}>
-            {score.toLocaleString()}
+            {score.toLocaleString('fr-FR')}
           </Animated.Text>
           {combo > 1 && <Text style={styles.comboText}>x{combo}</Text>}
         </View>

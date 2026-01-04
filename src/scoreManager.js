@@ -56,7 +56,7 @@ export const getRandomCelebrationWord = () => {
  * @returns {string} Formatted score string
  */
 export const formatScore = (score) => {
-  return score.toLocaleString();
+  return score.toLocaleString('fr-FR');
 };
 
 /**

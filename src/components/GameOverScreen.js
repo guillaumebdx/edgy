@@ -64,7 +64,7 @@ const GameOverScreen = ({
         {/* Target score reminder if failed */}
         {levelResult && !isLevelComplete && (
           <Text style={styles.targetReminder}>
-            Objectif : {levelResult.targetScore?.toLocaleString() || '—'}
+            Objectif : {levelResult.targetScore?.toLocaleString('fr-FR') || '—'}
           </Text>
         )}
         
