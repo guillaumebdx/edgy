@@ -389,17 +389,24 @@ const CareerMap = ({
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Free Mode card at top */}
+        {/* Free Mode card at top - prominent and attractive */}
         <TouchableOpacity 
           style={styles.freeModeCard} 
           onPress={onFreeMode}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
+          <View style={styles.freeModeGlow} />
           <View style={styles.freeModeCardContent}>
-            <Text style={styles.freeModeCardTitle}>🎮 Mode Libre</Text>
-            <Text style={styles.freeModeCardHighScore}>High Score : {freeHighScore.toLocaleString()}</Text>
+            <Text style={styles.freeModeCardTitle}>MODE LIBRE</Text>
+            <Text style={styles.freeModeCardSubtitle}>Jouez sans limite • Battez votre record</Text>
+            {freeHighScore > 0 && (
+              <View style={styles.freeModeHighScoreRow}>
+                <Text style={styles.freeModeHighScoreLabel}>Meilleur score :</Text>
+                <Text style={styles.freeModeCardHighScore}>{freeHighScore.toLocaleString()}</Text>
+              </View>
+            )}
           </View>
-          <Text style={styles.freeModeCardArrow}>›</Text>
+          <Text style={styles.freeModeCardArrow}>▶</Text>
         </TouchableOpacity>
 
         {/* Circuit path */}
@@ -494,33 +501,85 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
-    padding: 14,
-    backgroundColor: 'rgba(100, 160, 180, 0.15)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(100, 160, 180, 0.5)',
+    marginBottom: 24,
+    padding: 18,
+    backgroundColor: 'rgba(15, 40, 55, 0.9)',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(0, 255, 255, 0.6)',
+    shadowColor: '#00FFFF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  freeModeGlow: {
+    position: 'absolute',
+    top: -50,
+    left: -50,
+    right: -50,
+    bottom: -50,
+    backgroundColor: 'rgba(0, 255, 255, 0.08)',
+    borderRadius: 100,
   },
   freeModeCardContent: {
     flex: 1,
+    zIndex: 1,
+  },
+  freeModeTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  freeModeIcon: {
+    fontSize: 18,
+    marginHorizontal: 6,
   },
   freeModeCardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: 'rgba(100, 180, 220, 0.95)',
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#00FFFF',
+    letterSpacing: 2,
     marginBottom: 4,
+    textShadowColor: 'rgba(0, 255, 255, 0.6)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+  },
+  freeModeCardSubtitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginBottom: 8,
+  },
+  freeModeHighScoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  freeModeHighScoreLabel: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginRight: 6,
   },
   freeModeCardHighScore: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255, 215, 0, 0.9)',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFD700',
     fontFamily: 'monospace',
+    textShadowColor: 'rgba(255, 215, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 6,
   },
   freeModeCardArrow: {
-    fontSize: 32,
-    fontWeight: '300',
-    color: 'rgba(100, 160, 180, 0.7)',
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#00FFFF',
     marginLeft: 12,
+    zIndex: 1,
+    textShadowColor: 'rgba(0, 255, 255, 0.8)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
   },
   scrollView: {
     flex: 1,

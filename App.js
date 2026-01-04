@@ -156,6 +156,11 @@ export default function App() {
     shortCircuitsRemaining,
     isShortCircuitActive,
     shortCircuitCell,
+    // Reprogram (Free Mode)
+    reprogramsRemaining,
+    isReprogramModalOpen,
+    reprogramSelectedValue,
+    isReprogramActive,
     handleGridLayout,
     handleGestureBegin,
     handleGestureUpdate,
@@ -163,6 +168,10 @@ export default function App() {
     restartGame,
     shuffleGrid,
     toggleShortCircuit,
+    openReprogramModal,
+    closeReprogramModal,
+    selectReprogramValue,
+    cancelReprogram,
   } = useGameState(activeLevelConfig, tutorialState);
 
   // Level entry animation
@@ -588,31 +597,83 @@ export default function App() {
         </GestureDetector>
       </View>
 
-      {/* Short Circuit button - Free Mode only */}
+      {/* Free Mode power-ups: Short Circuit and Reprogram */}
       {isFreeModeActive && (
-        <View style={styles.shortCircuitContainer}>
-          <TouchableOpacity
-            style={[
-              styles.shortCircuitButton,
-              shortCircuitsRemaining === 0 && styles.shortCircuitButtonDisabled,
-              isShortCircuitActive && styles.shortCircuitButtonActive,
-            ]}
-            onPress={toggleShortCircuit}
-            disabled={shortCircuitsRemaining === 0 && !isShortCircuitActive}
-          >
-            <Image 
-              source={require('./assets/court_circuit.png')} 
-              style={styles.shortCircuitIcon}
-              resizeMode="contain"
-            />
-            {/* Hide count when active (user is about to use it) */}
-            {!isShortCircuitActive && (
-              <Text style={styles.shortCircuitCount}>{shortCircuitsRemaining}</Text>
-            )}
-          </TouchableOpacity>
-          {isShortCircuitActive && (
-            <Text style={styles.shortCircuitHint}>Touchez une case à détruire</Text>
-          )}
+        <View style={styles.powerUpsContainer}>
+          {/* Short Circuit button */}
+          <View style={styles.powerUpWrapper}>
+            <TouchableOpacity
+              style={[
+                styles.shortCircuitButton,
+                shortCircuitsRemaining === 0 && styles.shortCircuitButtonDisabled,
+                isShortCircuitActive && styles.shortCircuitButtonActive,
+              ]}
+              onPress={toggleShortCircuit}
+              disabled={shortCircuitsRemaining === 0 && !isShortCircuitActive}
+            >
+              <Image 
+                source={require('./assets/court_circuit.png')} 
+                style={styles.shortCircuitIcon}
+                resizeMode="contain"
+              />
+              {!isShortCircuitActive && (
+                <Text style={styles.shortCircuitCount}>{shortCircuitsRemaining}</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+          
+          {/* Reprogram button */}
+          <View style={styles.powerUpWrapper}>
+            <TouchableOpacity
+              style={[
+                styles.reprogramButton,
+                reprogramsRemaining === 0 && styles.reprogramButtonDisabled,
+                isReprogramActive && styles.reprogramButtonActive,
+              ]}
+              onPress={isReprogramActive ? cancelReprogram : openReprogramModal}
+              disabled={reprogramsRemaining === 0 && !isReprogramActive}
+            >
+              <Image 
+                source={require('./assets/reprogram.png')} 
+                style={styles.reprogramIcon}
+                resizeMode="contain"
+              />
+              {!isReprogramActive && (
+                <Text style={styles.reprogramCount}>{reprogramsRemaining}</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+      
+      {/* Hint text for active power-ups */}
+      {isFreeModeActive && (isShortCircuitActive || isReprogramActive) && (
+        <Text style={styles.powerUpHint}>
+          {isShortCircuitActive ? 'Touchez une case à détruire' : `Touchez une case pour la changer en ${reprogramSelectedValue}`}
+        </Text>
+      )}
+      
+      {/* Reprogram value selection modal */}
+      {isReprogramModalOpen && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.reprogramModal}>
+            <Text style={styles.reprogramModalTitle}>Reprogrammation</Text>
+            <Text style={styles.reprogramModalSubtitle}>Choisissez la nouvelle valeur</Text>
+            <View style={styles.reprogramValueGrid}>
+              {Array.from({ length: maxValue - 1 }, (_, i) => i + 1).map((value) => (
+                <TouchableOpacity
+                  key={value}
+                  style={styles.reprogramValueButton}
+                  onPress={() => selectReprogramValue(value)}
+                >
+                  <Text style={styles.reprogramValueText}>{value}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity style={styles.reprogramCancelButton} onPress={closeReprogramModal}>
+              <Text style={styles.reprogramCancelText}>Annuler</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 

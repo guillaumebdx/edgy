@@ -162,12 +162,29 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
   },
-  // Short Circuit styles
-  shortCircuitContainer: {
+  // Power-ups container (Free Mode)
+  powerUpsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     marginTop: 16,
     marginBottom: 8,
+    gap: 20,
   },
+  powerUpWrapper: {
+    alignItems: 'center',
+  },
+  powerUpHint: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#00FFFF',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 255, 255, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+    marginBottom: 8,
+  },
+  // Short Circuit styles
   shortCircuitButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -202,15 +219,102 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
     fontFamily: 'monospace',
   },
-  shortCircuitHint: {
-    marginTop: 8,
+  // Reprogram styles
+  reprogramButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 150, 0, 0.2)',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 180, 0, 0.5)',
+    gap: 8,
+  },
+  reprogramButtonDisabled: {
+    backgroundColor: 'rgba(80, 80, 80, 0.2)',
+    borderColor: 'rgba(80, 80, 80, 0.3)',
+  },
+  reprogramButtonActive: {
+    backgroundColor: 'rgba(255, 180, 0, 0.4)',
+    borderColor: '#FFB400',
+    shadowColor: '#FFB400',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  reprogramIcon: {
+    width: 40,
+    height: 40,
+  },
+  reprogramCount: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontFamily: 'monospace',
+  },
+  // Reprogram modal styles
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  reprogramModal: {
+    backgroundColor: '#1A2428',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 180, 0, 0.5)',
+    minWidth: 280,
+  },
+  reprogramModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFB400',
+    marginBottom: 8,
+  },
+  reprogramModalSubtitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#00FFFF',
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 255, 255, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginBottom: 20,
+  },
+  reprogramValueGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 12,
+    marginBottom: 20,
+  },
+  reprogramValueButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 180, 0, 0.3)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 180, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reprogramValueText: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  reprogramCancelButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+  },
+  reprogramCancelText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.6)',
   },
 });
 

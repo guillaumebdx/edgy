@@ -111,6 +111,13 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   const [isShortCircuitActive, setIsShortCircuitActive] = useState(false);
   const [shortCircuitCell, setShortCircuitCell] = useState(null); // Cell being destroyed by short circuit
   
+  // Reprogram state (Free Mode only)
+  const initialReprograms = isFreeMode ? 1 : 0;
+  const [reprogramsRemaining, setReprogramsRemaining] = useState(initialReprograms);
+  const [isReprogramModalOpen, setIsReprogramModalOpen] = useState(false);
+  const [reprogramSelectedValue, setReprogramSelectedValue] = useState(null); // Value to set on cell
+  const [isReprogramActive, setIsReprogramActive] = useState(false); // Waiting for cell click
+  
   // Store targetScore in ref for use in callbacks
   const targetScoreRef = useRef(targetScore);
   
@@ -199,6 +206,11 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       setShortCircuitsRemaining(initialShortCircuits);
       setIsShortCircuitActive(false);
       setShortCircuitCell(null);
+      // Reset reprogram state
+      setReprogramsRemaining(initialReprograms);
+      setIsReprogramModalOpen(false);
+      setReprogramSelectedValue(null);
+      setIsReprogramActive(false);
       setPath([]);
       pathRef.current = [];
       pathValueRef.current = null;
@@ -207,7 +219,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       setShakingCells([]);
       setFallingCells({});
     }
-  }, [levelId, gridSize, maxValue, initialStock, initialShuffles, initialShortCircuits, tutorial]);
+  }, [levelId, gridSize, maxValue, initialStock, initialShuffles, initialShortCircuits, initialReprograms, tutorial]);
 
   /**
    * Handles grid layout measurement for touch coordinate conversion
@@ -405,9 +417,11 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
         }
         
         if (isFullColumn && !completedFreeChallengesRef.current.has(key)) {
-          // New completed column - award bonus
+          // New completed column - award bonus AND +1 reprogram
           completedFreeChallengesRef.current.add(key);
           triggerChallengeSuccess(col, 500);
+          // Award a reprogram for column completion
+          setReprogramsRemaining(prev => prev + 1);
           return;
         } else if (!isFullColumn && completedFreeChallengesRef.current.has(key)) {
           // Column is no longer complete - remove from tracked
@@ -718,8 +732,50 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   const toggleShortCircuit = useCallback(() => {
     if (shortCircuitsRemaining <= 0 && !isShortCircuitActive) return;
     if (gameOver) return;
+    // Cancel reprogram if active
+    if (isReprogramActive) {
+      setIsReprogramActive(false);
+      setReprogramSelectedValue(null);
+    }
     setIsShortCircuitActive(prev => !prev);
-  }, [shortCircuitsRemaining, isShortCircuitActive, gameOver]);
+  }, [shortCircuitsRemaining, isShortCircuitActive, isReprogramActive, gameOver]);
+
+  /**
+   * Open reprogram modal (Free Mode only)
+   */
+  const openReprogramModal = useCallback(() => {
+    if (reprogramsRemaining <= 0) return;
+    if (gameOver) return;
+    // Cancel short circuit if active
+    if (isShortCircuitActive) {
+      setIsShortCircuitActive(false);
+    }
+    setIsReprogramModalOpen(true);
+  }, [reprogramsRemaining, isShortCircuitActive, gameOver]);
+
+  /**
+   * Close reprogram modal
+   */
+  const closeReprogramModal = useCallback(() => {
+    setIsReprogramModalOpen(false);
+  }, []);
+
+  /**
+   * Select a value in reprogram modal and activate reprogram mode
+   */
+  const selectReprogramValue = useCallback((value) => {
+    setReprogramSelectedValue(value);
+    setIsReprogramModalOpen(false);
+    setIsReprogramActive(true);
+  }, []);
+
+  /**
+   * Cancel reprogram mode
+   */
+  const cancelReprogram = useCallback(() => {
+    setIsReprogramActive(false);
+    setReprogramSelectedValue(null);
+  }, []);
 
   /**
    * Restarts the game with fresh state using current level parameters
@@ -758,13 +814,18 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     setShortCircuitsRemaining(initialShortCircuits);
     setIsShortCircuitActive(false);
     setShortCircuitCell(null);
+    // Reset reprogram state
+    setReprogramsRemaining(initialReprograms);
+    setIsReprogramModalOpen(false);
+    setReprogramSelectedValue(null);
+    setIsReprogramActive(false);
     setPath([]);
     pathRef.current = [];
     pathValueRef.current = null;
     isResolvingRef.current = false;
     // Reset tutorial state if in tutorial mode
     tutorialHandlers?.resetTutorial?.();
-  }, [initialStock, initialShuffles, initialShortCircuits, tutorial, tutorialHandlers]);
+  }, [initialStock, initialShuffles, initialShortCircuits, initialReprograms, tutorial, tutorialHandlers]);
 
   /**
    * Gesture handlers for pan gesture
@@ -776,6 +837,28 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     (x, y) => {
       if (gameOver) return;
       const cellIndex = getCellFromPosition(x, y, gridLayout, gridSizeRef.current);
+      
+      // If reprogram is active, change the cell value
+      if (isReprogramActive && reprogramSelectedValue !== null && cellIndex !== null && gridData[cellIndex] !== null) {
+        // Consume the reprogram
+        setReprogramsRemaining(prev => prev - 1);
+        setIsReprogramActive(false);
+        
+        const newValue = reprogramSelectedValue;
+        setReprogramSelectedValue(null);
+        
+        // Change the cell value (no bonus trigger, no gravity)
+        setGridData((currentGrid) => {
+          const newGrid = [...currentGrid];
+          newGrid[cellIndex] = newValue;
+          // Check game end after reprogram (in case it creates/breaks moves)
+          setTimeout(() => {
+            checkGameEnd(newGrid, scoreRef.current);
+          }, 50);
+          return newGrid;
+        });
+        return;
+      }
       
       // If short circuit is active, use it on the cell instead of starting a path
       if (isShortCircuitActive && cellIndex !== null && gridData[cellIndex] !== null) {
@@ -835,7 +918,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
         setPath([cellIndex]);
       }
     },
-    [gridLayout, gridData, gameOver, isShortCircuitActive, shortCircuitsRemaining, isFreeMode, checkChallenge, checkGameEnd]
+    [gridLayout, gridData, gameOver, isShortCircuitActive, shortCircuitsRemaining, isReprogramActive, reprogramSelectedValue, isFreeMode, checkChallenge, checkGameEnd]
   );
 
   const handleGestureUpdate = useCallback(
@@ -875,6 +958,11 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     shortCircuitsRemaining,
     isShortCircuitActive,
     shortCircuitCell,
+    // Reprogram state (Free Mode)
+    reprogramsRemaining,
+    isReprogramModalOpen,
+    reprogramSelectedValue,
+    isReprogramActive,
     
     // Level parameters (for UI display)
     gridSize,
@@ -889,6 +977,10 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     restartGame,
     shuffleGrid,
     toggleShortCircuit,
+    openReprogramModal,
+    closeReprogramModal,
+    selectReprogramValue,
+    cancelReprogram,
   };
 };
 
