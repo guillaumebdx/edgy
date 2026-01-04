@@ -162,6 +162,56 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
   },
+  // Short Circuit styles
+  shortCircuitContainer: {
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  shortCircuitButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 200, 255, 0.2)',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(0, 255, 255, 0.5)',
+    gap: 8,
+  },
+  shortCircuitButtonDisabled: {
+    backgroundColor: 'rgba(80, 80, 80, 0.2)',
+    borderColor: 'rgba(80, 80, 80, 0.3)',
+  },
+  shortCircuitButtonActive: {
+    backgroundColor: 'rgba(0, 255, 255, 0.4)',
+    borderColor: '#00FFFF',
+    shadowColor: '#00FFFF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  shortCircuitIcon: {
+    width: 40,
+    height: 40,
+  },
+  shortCircuitCount: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontFamily: 'monospace',
+  },
+  shortCircuitHint: {
+    marginTop: 8,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#00FFFF',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 255, 255, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+  },
 });
 
 export default styles;

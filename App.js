@@ -16,7 +16,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Text, View, ImageBackground, TouchableOpacity } from 'react-native';
+import { Text, View, ImageBackground, TouchableOpacity, Image } from 'react-native';
 import { GestureHandlerRootView, GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, { 
   runOnJS, 
@@ -152,12 +152,17 @@ export default function App() {
     shufflesRemaining,
     isShuffling,
     noMovesAvailable,
+    // Short circuit (Free Mode)
+    shortCircuitsRemaining,
+    isShortCircuitActive,
+    shortCircuitCell,
     handleGridLayout,
     handleGestureBegin,
     handleGestureUpdate,
     handleGestureEnd,
     restartGame,
     shuffleGrid,
+    toggleShortCircuit,
   } = useGameState(activeLevelConfig, tutorialState);
 
   // Level entry animation
@@ -526,6 +531,8 @@ export default function App() {
                   ? getRevealDelay(index) 
                   : 0;
 
+              const isShortCircuitTarget = shortCircuitCell === index;
+              
               return (
                 <AnimatedCell
                   key={index}
@@ -545,6 +552,7 @@ export default function App() {
                   entryPhase={entryPhase}
                   entryDelay={entryDelay}
                   isShuffling={isShuffling}
+                  isShortCircuit={isShortCircuitTarget}
                 />
               );
             })}
@@ -579,6 +587,34 @@ export default function App() {
           </View>
         </GestureDetector>
       </View>
+
+      {/* Short Circuit button - Free Mode only */}
+      {isFreeModeActive && (
+        <View style={styles.shortCircuitContainer}>
+          <TouchableOpacity
+            style={[
+              styles.shortCircuitButton,
+              shortCircuitsRemaining === 0 && styles.shortCircuitButtonDisabled,
+              isShortCircuitActive && styles.shortCircuitButtonActive,
+            ]}
+            onPress={toggleShortCircuit}
+            disabled={shortCircuitsRemaining === 0 && !isShortCircuitActive}
+          >
+            <Image 
+              source={require('./assets/court_circuit.png')} 
+              style={styles.shortCircuitIcon}
+              resizeMode="contain"
+            />
+            {/* Hide count when active (user is about to use it) */}
+            {!isShortCircuitActive && (
+              <Text style={styles.shortCircuitCount}>{shortCircuitsRemaining}</Text>
+            )}
+          </TouchableOpacity>
+          {isShortCircuitActive && (
+            <Text style={styles.shortCircuitHint}>Touchez une case à détruire</Text>
+          )}
+        </View>
+      )}
 
       {/* Celebration text overlay */}
       <CelebrationText

@@ -105,6 +105,12 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   const [isShuffling, setIsShuffling] = useState(false);
   const [noMovesAvailable, setNoMovesAvailable] = useState(false);
   
+  // Short circuit state (Free Mode only)
+  const initialShortCircuits = isFreeMode ? 1 : 0;
+  const [shortCircuitsRemaining, setShortCircuitsRemaining] = useState(initialShortCircuits);
+  const [isShortCircuitActive, setIsShortCircuitActive] = useState(false);
+  const [shortCircuitCell, setShortCircuitCell] = useState(null); // Cell being destroyed by short circuit
+  
   // Store targetScore in ref for use in callbacks
   const targetScoreRef = useRef(targetScore);
   
@@ -189,6 +195,10 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       shufflesRemainingRef.current = initialShuffles;
       setIsShuffling(false);
       setNoMovesAvailable(false);
+      // Reset short circuit state
+      setShortCircuitsRemaining(initialShortCircuits);
+      setIsShortCircuitActive(false);
+      setShortCircuitCell(null);
       setPath([]);
       pathRef.current = [];
       pathValueRef.current = null;
@@ -197,7 +207,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       setShakingCells([]);
       setFallingCells({});
     }
-  }, [levelId, gridSize, maxValue, initialStock, initialShuffles, tutorial]);
+  }, [levelId, gridSize, maxValue, initialStock, initialShuffles, initialShortCircuits, tutorial]);
 
   /**
    * Handles grid layout measurement for touch coordinate conversion
@@ -222,10 +232,12 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   }, []);
 
   // Recalculate cell dimensions when gridSize changes (level change)
+  // This is CRITICAL for touch accuracy - cellWidth/cellHeight must match current gridSize
   useEffect(() => {
-    if (gridLayout.width > 0 && gridLayout.gridSize !== gridSize) {
+    if (gridLayout.width > 0) {
       const cellWidth = gridLayout.width / gridSize;
       const cellHeight = gridLayout.height / gridSize;
+      // Always update to ensure gridSize is in sync
       setGridLayout(prev => ({
         ...prev,
         cellWidth,
@@ -233,7 +245,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
         gridSize,
       }));
     }
-  }, [gridSize, gridLayout.width, gridLayout.height, gridLayout.gridSize]);
+  }, [gridSize, gridLayout.width, gridLayout.height]);
 
   /**
    * Triggers haptic feedback
@@ -420,9 +432,11 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
         }
         
         if (isFullRow && !completedFreeChallengesRef.current.has(key)) {
-          // New completed row - award bonus
+          // New completed row - award bonus AND +1 short circuit
           completedFreeChallengesRef.current.add(key);
           triggerChallengeSuccess(-(row + 1), 500);
+          // Award a short circuit for row completion
+          setShortCircuitsRemaining(prev => prev + 1);
           return;
         } else if (!isFullRow && completedFreeChallengesRef.current.has(key)) {
           // Row is no longer complete - remove from tracked
@@ -462,6 +476,9 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
    */
   const addCellToPath = useCallback((cellIndex, currentGridData) => {
     if (cellIndex === null) return;
+    
+    // IMPORTANT: Ignore empty cells (null value = no cell, stock depleted)
+    if (currentGridData[cellIndex] === null) return;
     
     const currentPath = pathRef.current;
     
@@ -696,6 +713,15 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   }, [shufflesRemaining, isShuffling, gameOver, isTutorialLevel, gridData, checkGameEnd]);
 
   /**
+   * Toggle short circuit mode (Free Mode only)
+   */
+  const toggleShortCircuit = useCallback(() => {
+    if (shortCircuitsRemaining <= 0 && !isShortCircuitActive) return;
+    if (gameOver) return;
+    setIsShortCircuitActive(prev => !prev);
+  }, [shortCircuitsRemaining, isShortCircuitActive, gameOver]);
+
+  /**
    * Restarts the game with fresh state using current level parameters
    */
   const restartGame = useCallback(() => {
@@ -728,28 +754,88 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     shufflesRemainingRef.current = initialShuffles;
     setIsShuffling(false);
     setNoMovesAvailable(false);
+    // Reset short circuit state
+    setShortCircuitsRemaining(initialShortCircuits);
+    setIsShortCircuitActive(false);
+    setShortCircuitCell(null);
     setPath([]);
     pathRef.current = [];
     pathValueRef.current = null;
     isResolvingRef.current = false;
     // Reset tutorial state if in tutorial mode
     tutorialHandlers?.resetTutorial?.();
-  }, [initialStock, initialShuffles, tutorial, tutorialHandlers]);
+  }, [initialStock, initialShuffles, initialShortCircuits, tutorial, tutorialHandlers]);
 
   /**
    * Gesture handlers for pan gesture
+   * IMPORTANT: gridSizeRef.current is always passed to getCellFromPosition
+   * The function recalculates cell dimensions from width/height + gridSize
+   * This guarantees correct touch detection regardless of layout state
    */
   const handleGestureBegin = useCallback(
     (x, y) => {
       if (gameOver) return;
       const cellIndex = getCellFromPosition(x, y, gridLayout, gridSizeRef.current);
+      
+      // If short circuit is active, use it on the cell instead of starting a path
+      if (isShortCircuitActive && cellIndex !== null && gridData[cellIndex] !== null) {
+        if (shortCircuitsRemaining <= 0) return;
+        
+        // Store the cell index to destroy (closure-safe)
+        const cellToDestroy = cellIndex;
+        
+        // Consume the short circuit
+        setShortCircuitsRemaining(prev => prev - 1);
+        setIsShortCircuitActive(false);
+        
+        // Mark cell for shaking animation
+        setShakingCells([cellToDestroy]);
+        setShortCircuitCell(cellToDestroy);
+        
+        // After shake animation, apply gravity
+        setTimeout(() => {
+          setShortCircuitCell(null);
+          setShakingCells([]);
+          
+          // Use setGridData with callback to get fresh grid state
+          setGridData((currentGrid) => {
+            const gridWithNulls = [...currentGrid];
+            gridWithNulls[cellToDestroy] = null;
+            
+            const { grid: newGrid, cellsUsed } = applyGravityAndFill(
+              gridWithNulls,
+              stockRef.current,
+              maxValueRef.current,
+              gridSizeRef.current
+            );
+            stockRef.current -= cellsUsed;
+            setStock(stockRef.current);
+
+            const fallDistances = calculateFallDistances(gridWithNulls, newGrid, gridSizeRef.current);
+
+            setTimeout(() => {
+              setFallingCells(fallDistances);
+              
+              setTimeout(() => {
+                setFallingCells({});
+                checkChallenge(newGrid, isFreeMode);
+                checkGameEnd(newGrid, scoreRef.current);
+              }, ANIMATION.FALL_ANIMATION_DURATION);
+            }, 50);
+
+            return newGrid;
+          });
+        }, ANIMATION.SHAKE_DURATION);
+        return;
+      }
+      
       if (cellIndex !== null && gridData[cellIndex] !== null) {
         pathValueRef.current = gridData[cellIndex];
         pathRef.current = [cellIndex];
         setPath([cellIndex]);
       }
     },
-    [gridLayout, gridData, gameOver]
+    [gridLayout, gridData, gameOver, isShortCircuitActive, shortCircuitsRemaining, isFreeMode, checkChallenge, checkGameEnd]
   );
 
   const handleGestureUpdate = useCallback(
@@ -785,6 +871,10 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     shufflesRemaining,
     isShuffling,
     noMovesAvailable,
+    // Short circuit state (Free Mode)
+    shortCircuitsRemaining,
+    isShortCircuitActive,
+    shortCircuitCell,
     
     // Level parameters (for UI display)
     gridSize,
@@ -798,6 +888,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     handleGestureEnd,
     restartGame,
     shuffleGrid,
+    toggleShortCircuit,
   };
 };
 

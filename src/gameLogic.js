@@ -384,13 +384,26 @@ export const hasValidMoves = (grid, gridSize = GRID_SIZE) => {
  * Converts screen coordinates to cell index
  * @param {number} x - X coordinate
  * @param {number} y - Y coordinate
- * @param {{cellWidth: number, cellHeight: number, padding: number, width: number, height: number}} layout - Grid layout info
+ * @param {{cellWidth: number, cellHeight: number, padding: number, width: number, height: number, gridSize: number}} layout - Grid layout info
  * @param {number} gridSize - Size of the grid (default from constants)
  * @returns {number|null} Cell index or null if outside grid
  */
 export const getCellFromPosition = (x, y, layout, gridSize = GRID_SIZE) => {
-  const { cellWidth, cellHeight, padding, width, height } = layout;
-  if (cellWidth === 0 || cellHeight === 0) return null;
+  const { padding = 0, width, height } = layout;
+  
+  // CRITICAL: Always use the passed gridSize parameter - it comes from gridSizeRef.current
+  // which is always up-to-date. Don't rely on layout.gridSize which may be stale.
+  const effectiveGridSize = gridSize;
+  
+  // Guard against uninitialized layout
+  if (!width || !height || width <= 0 || height <= 0) return null;
+  
+  // Always calculate cell dimensions from width/height and gridSize
+  // This ensures perfect synchronization regardless of when layout was measured
+  const effectiveCellWidth = width / effectiveGridSize;
+  const effectiveCellHeight = height / effectiveGridSize;
+  
+  if (effectiveCellWidth <= 0 || effectiveCellHeight <= 0) return null;
   
   const relativeX = x - padding;
   const relativeY = y - padding;
@@ -398,10 +411,10 @@ export const getCellFromPosition = (x, y, layout, gridSize = GRID_SIZE) => {
   if (relativeX < 0 || relativeY < 0) return null;
   if (relativeX >= width || relativeY >= height) return null;
   
-  const col = Math.floor(relativeX / cellWidth);
-  const row = Math.floor(relativeY / cellHeight);
+  const col = Math.floor(relativeX / effectiveCellWidth);
+  const row = Math.floor(relativeY / effectiveCellHeight);
   
-  if (col < 0 || col >= gridSize || row < 0 || row >= gridSize) return null;
+  if (col < 0 || col >= effectiveGridSize || row < 0 || row >= effectiveGridSize) return null;
   
-  return row * gridSize + col;
+  return row * effectiveGridSize + col;
 };

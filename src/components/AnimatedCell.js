@@ -35,6 +35,8 @@ const AnimatedCell = ({
   entryDelay = 0,
   // Shuffle animation
   isShuffling = false,
+  // Short circuit animation
+  isShortCircuit = false,
 }) => {
   // Calculate cell size based on gridSize
   const cellSizePercent = 100 / gridSize;
@@ -155,12 +157,37 @@ const AnimatedCell = ({
       opacityAnim.value = withSequence(
         withDelay(100, withTiming(0, { duration: 80 }))
       );
-    } else {
+    } else if (!isShortCircuit) {
       shakeAnim.value = 0;
       scaleAnim.value = 1;
       opacityAnim.value = 1;
     }
   }, [isShaking]);
+
+  // Short circuit electric destruction animation
+  const electricFlicker = useSharedValue(1);
+  useEffect(() => {
+    if (isShortCircuit) {
+      // Electric flicker effect - rapid opacity changes then disappear
+      electricFlicker.value = withSequence(
+        withTiming(0.3, { duration: 50 }),
+        withTiming(1, { duration: 30 }),
+        withTiming(0.2, { duration: 40 }),
+        withTiming(1, { duration: 30 }),
+        withTiming(0.1, { duration: 50 }),
+        withTiming(0.8, { duration: 30 }),
+        withTiming(0, { duration: 60 })
+      );
+      scaleAnim.value = withSequence(
+        withTiming(1.15, { duration: 80 }),
+        withTiming(0.95, { duration: 60 }),
+        withTiming(1.1, { duration: 50 }),
+        withTiming(0, { duration: 80, easing: Easing.in(Easing.ease) })
+      );
+    } else {
+      electricFlicker.value = 1;
+    }
+  }, [isShortCircuit]);
 
   // Fall animation after gravity
   useEffect(() => {
@@ -185,7 +212,7 @@ const AnimatedCell = ({
       { scale: scaleAnim.value * pressScale.value * entryScale.value * shuffleScale.value },
       { rotateZ: `${shuffleRotate.value}deg` },
     ],
-    opacity: opacityAnim.value,
+    opacity: opacityAnim.value * electricFlicker.value,
   }));
   
   // Determine colors based on entry phase
@@ -210,6 +237,7 @@ const AnimatedCell = ({
           isInPath && styles.cellOuterActive,
           isExceeded && styles.cellOuterExceeded,
           isChallengeColumn && styles.cellOuterChallenge,
+          isShortCircuit && styles.cellOuterShortCircuit,
         ]}
       >
         {/* Inner module surface */}
@@ -284,6 +312,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 8,
     elevation: 10,
+  },
+  cellOuterShortCircuit: {
+    borderColor: '#00FFFF',
+    borderWidth: 2,
+    shadowColor: '#00FFFF',
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 15,
   },
   cellInner: {
     flex: 1,

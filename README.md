@@ -81,7 +81,7 @@ cd edgy/edgy-grid
 npm install
 npx expo start
 ```
-
+(ou npx expo run:android pour lancer depuis un android virtuel sur pc)
 **Lancer sur appareil :**
 - Scannez le QR code avec Expo Go
 - `a` → Android | `i` → iOS | `w` → Web
