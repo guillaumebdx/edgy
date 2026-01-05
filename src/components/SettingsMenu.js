@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Modal,
   Alert,
+  Linking,
 } from 'react-native';
 
 /**
@@ -90,6 +91,15 @@ const SettingsMenu = ({
             <View style={[styles.toggle, soundEnabled && styles.toggleOn]}>
               <Text style={styles.toggleText}>{soundEnabled ? 'ON' : 'OFF'}</Text>
             </View>
+          </TouchableOpacity>
+
+          {/* Rules */}
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => Linking.openURL('https://guillaumebdx.github.io/regles-edgy/')}
+          >
+            <Text style={styles.menuItemText}>Règles du jeu</Text>
+            <Text style={styles.menuItemArrow}>→</Text>
           </TouchableOpacity>
 
           {/* Credits */}

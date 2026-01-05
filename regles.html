@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edgy - Règles du jeu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #0a1a25 0%, #1a2e3a 50%, #0d1f2d 100%);
+            color: #e0e8f0;
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            color: #00ddff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0, 221, 255, 0.5);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        /* Rules summary card */
+        .rules-summary {
+            background: rgba(15, 40, 55, 0.9);
+            border: 2px solid rgba(0, 200, 255, 0.5);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 150, 200, 0.15);
+        }
+
+        .rules-summary ol {
+            margin: 0;
+            padding-left: 24px;
+        }
+
+        .rules-summary li {
+            margin: 12px 0;
+            font-size: 1.05rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .rules-summary li strong {
+            color: #00ddff;
+        }
+
+        /* Toggle button */
+        .toggle-btn {
+            display: block;
+            width: 100%;
+            background: rgba(0, 200, 255, 0.15);
+            border: 2px solid rgba(0, 200, 255, 0.4);
+            border-radius: 12px;
+            padding: 16px 24px;
+            color: #00ddff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .toggle-btn:hover {
+            background: rgba(0, 200, 255, 0.25);
+            border-color: rgba(0, 200, 255, 0.6);
+        }
+
+        .toggle-btn .arrow {
+            display: inline-block;
+            margin-left: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-btn.open .arrow {
+            transform: rotate(180deg);
+        }
+
+        /* Details section */
+        .details-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .details-section.visible {
+            display: block;
+        }
+
+        h2 {
+            color: #00ddff;
+            font-size: 1.4rem;
+            margin: 35px 0 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(0, 221, 255, 0.3);
+            text-shadow: 0 0 10px rgba(0, 221, 255, 0.3);
+        }
+
+        h3 {
+            color: #7dd3fc;
+            font-size: 1.1rem;
+            margin: 20px 0 12px;
+        }
+
+        p {
+            margin-bottom: 12px;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .card {
+            background: rgba(15, 40, 55, 0.8);
+            border: 1px solid rgba(0, 200, 255, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .highlight {
+            background: rgba(0, 200, 255, 0.15);
+            border-left: 4px solid #00ddff;
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+        }
+
+        .warning {
+            background: rgba(255, 180, 0, 0.15);
+            border-left: 4px solid #ffb400;
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+        }
+
+        .warning strong {
+            color: #ffb400;
+        }
+
+        .tip {
+            background: rgba(100, 200, 100, 0.15);
+            border-left: 4px solid #70d0b0;
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+        }
+
+        .tip strong {
+            color: #70d0b0;
+        }
+
+        .example-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 200, 255, 0.2);
+            border-radius: 10px;
+            padding: 16px;
+            margin: 12px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre;
+            overflow-x: auto;
+            color: #a0d8ef;
+        }
+
+        .formula {
+            display: inline-block;
+            background: rgba(0, 200, 255, 0.2);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            color: #00ddff;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background: rgba(0, 200, 255, 0.2);
+            color: #00ddff;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-top: 1px solid rgba(0, 200, 255, 0.1);
+        }
+
+        .points {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        ul, ol {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+
+        li {
+            margin: 8px 0;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .power-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .power-card {
+            background: rgba(15, 40, 55, 0.9);
+            border: 1px solid rgba(0, 200, 255, 0.3);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .power-card h4 {
+            color: #00ddff;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .power-card p {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin: 0;
+        }
+
+        .mode-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        @media (max-width: 600px) {
+            .mode-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .mode-card {
+            background: rgba(15, 40, 55, 0.9);
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid rgba(0, 200, 255, 0.4);
+        }
+
+        .mode-card.libre {
+            border-color: rgba(0, 255, 255, 0.6);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
+        }
+
+        .mode-card h3 {
+            margin-top: 0;
+        }
+
+        .bonus-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+
+        .bonus-row:last-child {
+            border-bottom: none;
+        }
+
+        .bonus-icon {
+            font-size: 1.2rem;
+        }
+
+        .bonus-text {
+            flex: 1;
+        }
+
+        .bonus-reward {
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .glow-text {
+            text-shadow: 0 0 10px rgba(0, 221, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Edgy</h1>
+        <p class="subtitle">Règles du jeu</p>
+
+        <!-- Short rules summary -->
+        <div class="rules-summary">
+            <ol>
+                <li><strong>Relie</strong> par glissé des chiffres identiques qui se touchent (même en diagonale).</li>
+                <li>Tu dois relier <strong>plus de cases que la valeur du chiffre</strong>.<br><em>Ex : un « 3 » doit être relié à au moins 4 cases.</em></li>
+                <li>Toutes les cases reliées <strong>prennent la valeur du nombre de cases</strong>.<br><em>Ex : relier 4 cases → elles deviennent toutes « 4 »</em></li>
+                <li>Chaque niveau a un <strong>MAX</strong> : si le résultat dépasse MAX, les cases <strong>disparaissent</strong>.</li>
+                <li>Les cases <strong>tombent</strong>, de nouvelles arrivent.</li>
+                <li>La partie continue tant qu'un <strong>chemin est possible</strong>.</li>
+            </ol>
+        </div>
+
+        <!-- Toggle button -->
+        <button class="toggle-btn" id="toggleDetails">
+            En savoir plus <span class="arrow">▼</span>
+        </button>
+
+        <!-- Detailed rules section (hidden by default) -->
+        <div class="details-section" id="detailsSection">
+
+            <h2>Le score</h2>
+            <p>Le score dépend de la <strong>valeur du chiffre</strong> et du <strong>nombre de cases</strong> reliées.</p>
+            <p>Formule : <span class="formula">valeur × valeur × nombre de cases</span></p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Chiffre</th>
+                        <th>Cases</th>
+                        <th>Calcul</th>
+                        <th>Points</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2</td>
+                        <td>3</td>
+                        <td>2 × 2 × 3</td>
+                        <td class="points">12 pts</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>3</td>
+                        <td>3 × 3 × 3</td>
+                        <td class="points">27 pts</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>2</td>
+                        <td>4 × 4 × 2</td>
+                        <td class="points">32 pts</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>4</td>
+                        <td>5 × 5 × 4</td>
+                        <td class="points">100 pts</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="tip">
+                <strong>Astuce :</strong> Relier des chiffres élevés rapporte beaucoup plus de points !
+            </div>
+
+            <h2>Le stock</h2>
+            <p>Chaque niveau dispose d'un <strong>stock de cases</strong>. Quand des cases disparaissent, de nouvelles arrivent depuis le stock.</p>
+            
+            <div class="warning">
+                <strong>Attention :</strong> Quand le stock est vide, les cases ne sont plus remplacées !
+            </div>
+
+            <h2>Les modes de jeu</h2>
+            <div class="mode-section">
+                <div class="mode-card">
+                    <h3>Mode Carrière</h3>
+                    <p>Progressez à travers des niveaux de difficulté croissante :</p>
+                    <ul>
+                        <li>La grille s'agrandit</li>
+                        <li>Le chiffre MAX augmente</li>
+                        <li>Les objectifs de score augmentent</li>
+                    </ul>
+                </div>
+                <div class="mode-card libre">
+                    <h3 class="glow-text">Mode Libre</h3>
+                    <p>Jouez sans limite ! Battez votre record.</p>
+                    <p style="margin-top: 12px; color: #00ddff;"><strong>Bonus :</strong></p>
+                    <div class="bonus-row">
+                        <span class="bonus-icon">➡️</span>
+                        <span class="bonus-text">Ligne complète</span>
+                        <span class="bonus-reward">+500 pts</span>
+                    </div>
+                    <div class="bonus-row">
+                        <span class="bonus-icon">⬇️</span>
+                        <span class="bonus-text">Colonne complète</span>
+                        <span class="bonus-reward">+500 pts</span>
+                    </div>
+                </div>
+            </div>
+
+            <h2>Pouvoirs spéciaux</h2>
+            <div class="power-grid">
+                <div class="power-card">
+                    <h4>Mélange</h4>
+                    <p>Mélange toutes les cases de la grille.</p>
+                </div>
+                <div class="power-card">
+                    <h4>Court-circuit</h4>
+                    <p>Détruit une case de votre choix.</p>
+                </div>
+                <div class="power-card">
+                    <h4>Reprogrammation</h4>
+                    <p>Change le chiffre d'une case.</p>
+                </div>
+            </div>
+
+            <h2>Astuces</h2>
+            <div class="card">
+                <ul>
+                    <li><strong>Cherchez les longues chaînes</strong> — Plus le chemin est long, plus vous gagnez de points</li>
+                    <li><strong>Anticipez la gravité</strong> — Les cases tombent vers le bas après chaque coup</li>
+                    <li><strong>Gardez vos mélanges</strong> — Ne les utilisez que quand vous êtes vraiment bloqué</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Bonne partie !</p>
+        </div>
+    </div>
+
+    <script>
+        const toggleBtn = document.getElementById('toggleDetails');
+        const detailsSection = document.getElementById('detailsSection');
+
+        toggleBtn.addEventListener('click', function() {
+            const isVisible = detailsSection.classList.contains('visible');
+            
+            if (isVisible) {
+                detailsSection.classList.remove('visible');
+                toggleBtn.classList.remove('open');
+                toggleBtn.innerHTML = 'En savoir plus <span class="arrow">▼</span>';
+            } else {
+                detailsSection.classList.add('visible');
+                toggleBtn.classList.add('open');
+                toggleBtn.innerHTML = 'Masquer les détails <span class="arrow">▼</span>';
+            }
+        });
+    </script>
+</body>
+</html>
