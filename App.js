@@ -41,6 +41,7 @@ import {
   TutorialOverlay,
   PathCounter,
 } from './src/components';
+import StockPreview from './src/components/StockPreview';
 import { getLevelConfig } from './src/careerLevels';
 import { useGameState, useCareerState, useTutorialState, useLevelEntryAnimation } from './src/hooks';
 import { initSounds, unloadSounds, startBackgroundMusic, stopBackgroundMusic, playLandingSound } from './src/sounds';
@@ -141,6 +142,7 @@ export default function App() {
     finalScore, // AUTHORITATIVE score at game over moment
     combo,
     stock,
+    previewRow,
     gameOver,
     levelComplete,
     challengeCompleted,
@@ -507,6 +509,14 @@ export default function App() {
 
       {/* Grid Container */}
       <View style={styles.gridContainer}>
+        {/* Stock Preview - shows next cells */}
+        <StockPreview
+          previewRow={previewRow}
+          gridSize={gridSize}
+          maxValue={maxValue}
+          gridWidth={gridLayout.width}
+        />
+
         {/* Floating score feedback */}
         <FloatingText
           text={floatingScore.text}

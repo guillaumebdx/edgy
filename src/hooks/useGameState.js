@@ -72,7 +72,8 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       }
       return grid;
     }
-    return generateGrid(gridSize, maxValue);
+    const { grid } = generateGrid(gridSize, maxValue, initialStock);
+    return grid;
   });
   const [exceededCells, setExceededCells] = useState([]);
   const [shakingCells, setShakingCells] = useState([]);
@@ -90,7 +91,16 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   // Score and progression state
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
-  const [stock, setStock] = useState(initialStock);
+  // Preview row is like "row -1" - shows next cells to fall per column
+  const [previewRow, setPreviewRow] = useState(() => {
+    const { previewRow } = generateGrid(gridSize, maxValue, initialStock);
+    return previewRow;
+  });
+  // Stock count is just a counter of remaining cells (after initial preview)
+  const [stockCount, setStockCount] = useState(() => {
+    const { stockCount } = generateGrid(gridSize, maxValue, initialStock);
+    return stockCount;
+  });
   const [gameOver, setGameOver] = useState(false);
   const [levelComplete, setLevelComplete] = useState(false);
   
@@ -143,7 +153,8 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   const pathRef = useRef([]);
   const pathValueRef = useRef(null);
   const isResolvingRef = useRef(false);
-  const stockRef = useRef(initialStock);
+  const previewRowRef = useRef(generateGrid(gridSize, maxValue, initialStock).previewRow);
+  const stockCountRef = useRef(generateGrid(gridSize, maxValue, initialStock).stockCount);
   const shufflesRemainingRef = useRef(initialShuffles);
   
   // Store level params in refs for use in callbacks
@@ -176,21 +187,31 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       // IMPORTANT: Ensure grid has exactly gridSize*gridSize elements
       const expectedLength = gridSize * gridSize;
       let newGrid;
+      let newPreviewRow;
+      let newStockCount;
       if (tutorial?.initialGrid) {
         newGrid = [...tutorial.initialGrid].slice(0, expectedLength);
         // Pad if too short
         while (newGrid.length < expectedLength) {
           newGrid.push(Math.floor(Math.random() * maxValue) + 1);
         }
+        const { previewRow: newPreview, stockCount: newCount } = generateGrid(gridSize, maxValue, initialStock);
+        newPreviewRow = newPreview;
+        newStockCount = newCount;
       } else {
-        newGrid = generateGrid(gridSize, maxValue);
+        const result = generateGrid(gridSize, maxValue, initialStock);
+        newGrid = result.grid;
+        newPreviewRow = result.previewRow;
+        newStockCount = result.stockCount;
       }
       setGridData(newGrid);
       setScore(0);
       scoreRef.current = 0;
       setCombo(0);
-      stockRef.current = initialStock;
-      setStock(initialStock);
+      previewRowRef.current = newPreviewRow;
+      stockCountRef.current = newStockCount;
+      setPreviewRow(newPreviewRow);
+      setStockCount(newStockCount);
       setGameOver(false);
       gameOverRef.current = false;
       setFinalScore(null);
@@ -618,14 +639,17 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
               }
             });
 
-            const { grid: newGrid, cellsUsed } = applyGravityAndFill(
+            const { grid: newGrid, newPreviewRow, newStockCount } = applyGravityAndFill(
               gridWithNulls,
-              stockRef.current,
+              previewRowRef.current,
+              stockCountRef.current,
               maxValueRef.current,
               gridSizeRef.current
             );
-            stockRef.current -= cellsUsed;
-            setStock(stockRef.current);
+            previewRowRef.current = newPreviewRow;
+            stockCountRef.current = newStockCount;
+            setPreviewRow(newPreviewRow);
+            setStockCount(newStockCount);
 
             const fallDistances = calculateFallDistances(gridWithNulls, newGrid, gridSizeRef.current);
 
@@ -785,20 +809,30 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     // IMPORTANT: Ensure grid has exactly gridSize*gridSize elements
     const expectedLength = gridSizeRef.current * gridSizeRef.current;
     let newGrid;
+    let newPreviewRow;
+    let newStockCount;
     if (tutorial?.initialGrid) {
       newGrid = [...tutorial.initialGrid].slice(0, expectedLength);
       while (newGrid.length < expectedLength) {
         newGrid.push(Math.floor(Math.random() * maxValueRef.current) + 1);
       }
+      const result = generateGrid(gridSizeRef.current, maxValueRef.current, initialStock);
+      newPreviewRow = result.previewRow;
+      newStockCount = result.stockCount;
     } else {
-      newGrid = generateGrid(gridSizeRef.current, maxValueRef.current);
+      const result = generateGrid(gridSizeRef.current, maxValueRef.current, initialStock);
+      newGrid = result.grid;
+      newPreviewRow = result.previewRow;
+      newStockCount = result.stockCount;
     }
     setGridData(newGrid);
     setScore(0);
     scoreRef.current = 0;
     setCombo(0);
-    stockRef.current = initialStock;
-    setStock(initialStock);
+    previewRowRef.current = newPreviewRow;
+    stockCountRef.current = newStockCount;
+    setPreviewRow(newPreviewRow);
+    setStockCount(newStockCount);
     setGameOver(false);
     gameOverRef.current = false;
     setFinalScore(null);
@@ -885,14 +919,17 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
             const gridWithNulls = [...currentGrid];
             gridWithNulls[cellToDestroy] = null;
             
-            const { grid: newGrid, cellsUsed } = applyGravityAndFill(
+            const { grid: newGrid, newPreviewRow, newStockCount } = applyGravityAndFill(
               gridWithNulls,
-              stockRef.current,
+              previewRowRef.current,
+              stockCountRef.current,
               maxValueRef.current,
               gridSizeRef.current
             );
-            stockRef.current -= cellsUsed;
-            setStock(stockRef.current);
+            previewRowRef.current = newPreviewRow;
+            stockCountRef.current = newStockCount;
+            setPreviewRow(newPreviewRow);
+            setStockCount(newStockCount);
 
             const fallDistances = calculateFallDistances(gridWithNulls, newGrid, gridSizeRef.current);
 
@@ -944,7 +981,8 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     score,
     finalScore, // AUTHORITATIVE score at game over moment
     combo,
-    stock,
+    stock: stockCount + previewRow.filter(cell => cell !== null).length,
+    previewRow,
     gameOver,
     levelComplete,
     challengeCompleted,

@@ -6,17 +6,32 @@
 import { GRID_SIZE, MAX_VALUE } from './constants';
 
 /**
- * Generates a new random grid
+ * Generates a new random grid and initial preview row
  * @param {number} gridSize - Size of the grid (default from constants)
  * @param {number} maxValue - Maximum cell value (default from constants)
- * @returns {number[]} Array of random values between 1 and maxValue
+ * @param {number} stockCount - Number of stock cells remaining (just a counter)
+ * @returns {{grid: number[], previewRow: number[], stockCount: number}} Grid, preview row, and stock counter
  */
-export const generateGrid = (gridSize = GRID_SIZE, maxValue = MAX_VALUE) => {
+export const generateGrid = (gridSize = GRID_SIZE, maxValue = MAX_VALUE, stockCount = 0) => {
   const grid = [];
   for (let i = 0; i < gridSize * gridSize; i++) {
     grid.push(Math.floor(Math.random() * maxValue) + 1);
   }
-  return grid;
+  
+  // Preview row is like "row -1" - the next cells that will fall into each column
+  // Generate initial preview row (costs gridSize from stock)
+  const previewRow = [];
+  let remainingStock = stockCount;
+  for (let col = 0; col < gridSize; col++) {
+    if (remainingStock > 0) {
+      previewRow.push(Math.floor(Math.random() * maxValue) + 1);
+      remainingStock--;
+    } else {
+      previewRow.push(null);
+    }
+  }
+  
+  return { grid, previewRow, stockCount: remainingStock };
 };
 
 /**
@@ -60,19 +75,23 @@ export const isValidPath = (path, pathValue) => {
 };
 
 /**
- * Applies gravity to the grid and fills empty spaces with new cells
+ * Applies gravity to the grid and fills empty spaces using preview row
+ * Preview row acts as "row -1" - cells fall from there, then preview regenerates
  * @param {(number|null)[]} grid - Current grid state
- * @param {number} availableStock - Number of new cells available
+ * @param {number[]} previewRow - Current preview row (one cell per column)
+ * @param {number} stockCount - Remaining stock counter
  * @param {number} maxValue - Maximum cell value (default from constants)
  * @param {number} gridSize - Size of the grid (default from constants)
- * @returns {{grid: (number|null)[], cellsUsed: number}} New grid and cells consumed
+ * @returns {{grid: (number|null)[], newPreviewRow: number[], newStockCount: number}} New grid, preview row, and stock count
  */
-export const applyGravityAndFill = (grid, availableStock, maxValue = MAX_VALUE, gridSize = GRID_SIZE) => {
+export const applyGravityAndFill = (grid, previewRow, stockCount, maxValue = MAX_VALUE, gridSize = GRID_SIZE) => {
   const newGrid = [...grid];
-  let cellsUsed = 0;
+  const newPreviewRow = [...previewRow];
+  let newStockCount = stockCount;
   
+  // Process each column
   for (let col = 0; col < gridSize; col++) {
-    // Collect non-null cells in column
+    // Collect non-null cells in column (from top to bottom)
     const column = [];
     for (let row = 0; row < gridSize; row++) {
       const index = row * gridSize + col;
@@ -81,19 +100,26 @@ export const applyGravityAndFill = (grid, availableStock, maxValue = MAX_VALUE, 
       }
     }
     
-    // Calculate how many new cells we need and can use
+    // Calculate how many new cells we need
     const emptyCount = gridSize - column.length;
-    const availableFromStock = Math.min(emptyCount, availableStock - cellsUsed);
     
-    // Add new random cells from stock
-    for (let i = 0; i < availableFromStock; i++) {
-      column.unshift(Math.floor(Math.random() * maxValue) + 1);
-      cellsUsed++;
-    }
-    
-    // Fill remaining with null if stock depleted
-    for (let i = 0; i < emptyCount - availableFromStock; i++) {
-      column.unshift(null);
+    // Fill from preview row and regenerate
+    for (let i = 0; i < emptyCount; i++) {
+      // Take cell from preview row if available
+      if (newPreviewRow[col] !== null) {
+        column.unshift(newPreviewRow[col]);
+        
+        // Regenerate preview cell if stock available
+        if (newStockCount > 0) {
+          newPreviewRow[col] = Math.floor(Math.random() * maxValue) + 1;
+          newStockCount--;
+        } else {
+          newPreviewRow[col] = null;
+        }
+      } else {
+        // No preview cell, fill with null
+        column.unshift(null);
+      }
     }
     
     // Write column back to grid
@@ -103,7 +129,7 @@ export const applyGravityAndFill = (grid, availableStock, maxValue = MAX_VALUE, 
     }
   }
   
-  return { grid: newGrid, cellsUsed };
+  return { grid: newGrid, newPreviewRow, newStockCount };
 };
 
 /**
