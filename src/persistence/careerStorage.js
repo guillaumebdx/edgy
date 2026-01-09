@@ -271,6 +271,30 @@ export const loadHighScore = async (mode = 'free_mode') => {
 };
 
 /**
+ * Reset high score for a specific game mode
+ * @param {string} mode - Game mode identifier (e.g., 'free_mode')
+ * @returns {Promise<boolean>} True if reset was successful
+ */
+export const resetHighScore = async (mode = 'free_mode') => {
+  try {
+    if (!db) {
+      const initialized = await initDatabase();
+      if (!initialized || !db) return false;
+    }
+    
+    await db.runAsync(
+      `DELETE FROM ${HIGH_SCORES_TABLE} WHERE mode = ?`,
+      [mode]
+    );
+    
+    return true;
+  } catch (error) {
+    console.error('Failed to reset high score:', error);
+    return false;
+  }
+};
+
+/**
  * Save high score for a specific game mode
  * Only updates if new score is higher
  * @param {number} score - Score to save

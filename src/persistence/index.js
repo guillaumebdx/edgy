@@ -14,4 +14,5 @@ export {
   loadAllStars,
   loadHighScore,
   saveHighScore,
+  resetHighScore,
 } from './careerStorage';

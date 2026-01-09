@@ -28,6 +28,7 @@ const SettingsMenu = ({
   soundEnabled,
   onToggleSound,
   onResetProgress,
+  onResetBestScore,
 }) => {
   const [showCredits, setShowCredits] = useState(false);
 
@@ -42,6 +43,24 @@ const SettingsMenu = ({
           style: 'destructive',
           onPress: () => {
             onResetProgress();
+            onClose();
+          },
+        },
+      ]
+    );
+  };
+
+  const handleResetBestScore = () => {
+    Alert.alert(
+      'Réinitialiser le meilleur score',
+      'Es-tu sûr de vouloir remettre ton meilleur score à zéro ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Confirmer',
+          style: 'destructive',
+          onPress: () => {
+            onResetBestScore?.();
             onClose();
           },
         },
@@ -111,6 +130,13 @@ const SettingsMenu = ({
             <Text style={styles.menuItemArrow}>→</Text>
           </TouchableOpacity>
 
+          {/* Reset Best Score */}
+          <TouchableOpacity style={styles.menuItem} onPress={handleResetBestScore}>
+            <Text style={[styles.menuItemText, styles.warningText]}>
+              Réinitialiser meilleur score
+            </Text>
+          </TouchableOpacity>
+
           {/* Reset Progress */}
           <TouchableOpacity style={styles.menuItem} onPress={handleResetPress}>
             <Text style={[styles.menuItemText, styles.dangerText]}>
@@ -175,6 +201,9 @@ const styles = StyleSheet.create({
   },
   dangerText: {
     color: '#e74c3c',
+  },
+  warningText: {
+    color: '#f39c12',
   },
   toggle: {
     backgroundColor: 'rgba(100, 100, 100, 0.4)',

@@ -22,7 +22,7 @@ import {
 import { CAREER_LEVELS } from '../careerLevels';
 import SettingsMenu from './SettingsMenu';
 import { loadSoundPreference, setSoundEnabled, isSoundEnabled } from '../sounds';
-import { loadHighScore } from '../persistence';
+import { loadHighScore, resetHighScore } from '../persistence';
 import { getLevelImage } from '../levelAssets';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -269,6 +269,11 @@ const CareerMap = ({
     await setSoundEnabled(newValue);
   };
 
+  const handleResetBestScore = async () => {
+    await resetHighScore('free_mode');
+    setFreeHighScore(0);
+  };
+
   // Hidden debug feature - 5 taps on title
   const [tapCount, setTapCount] = useState(0);
   const tapTimeoutRef = useRef(null);
@@ -353,6 +358,7 @@ const CareerMap = ({
         soundEnabled={soundEnabled}
         onToggleSound={handleToggleSound}
         onResetProgress={onNewGame}
+        onResetBestScore={handleResetBestScore}
       />
 
       {/* Debug Menu Modal */}
