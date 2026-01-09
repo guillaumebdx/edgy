@@ -118,6 +118,11 @@ const SettingsMenu = ({
             </Text>
           </TouchableOpacity>
 
+          {/* Version */}
+          <View style={styles.versionContainer}>
+            <Text style={styles.versionText}>Version 1.3.0</Text>
+          </View>
+
           {/* Close Button */}
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeButtonText}>Fermer</Text>
@@ -223,6 +228,15 @@ const styles = StyleSheet.create({
   backButtonText: {
     fontSize: 16,
     color: 'rgba(100, 160, 180, 0.8)',
+  },
+  versionContainer: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  versionText: {
+    fontSize: 14,
+    color: 'rgba(100, 160, 180, 0.5)',
+    fontStyle: 'italic',
   },
 });
 

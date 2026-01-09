@@ -60,7 +60,7 @@ const FREE_MODE_CONFIG = {
   name: 'Mode Libre',
   gridSize: 6,
   maxValue: 6,
-  stock: 20,
+  stock: 72,
   shuffles: 2,
   targetScore: null, // No target - play for high score
   isFreeMode: true, // Enable free mode challenges (row/column bonus)
@@ -607,57 +607,61 @@ export default function App() {
         </GestureDetector>
       </View>
 
-      {/* Free Mode power-ups: Short Circuit and Reprogram */}
-      {isFreeModeActive && (
+      {/* Power-ups: Short Circuit and Reprogram (Free Mode or Career levels with power-ups) */}
+      {(isFreeModeActive || shortCircuitsRemaining > 0 || reprogramsRemaining > 0) && (
         <View style={styles.powerUpsContainer}>
-          {/* Short Circuit button */}
-          <View style={styles.powerUpWrapper}>
-            <TouchableOpacity
-              style={[
-                styles.shortCircuitButton,
-                shortCircuitsRemaining === 0 && styles.shortCircuitButtonDisabled,
-                isShortCircuitActive && styles.shortCircuitButtonActive,
-              ]}
-              onPress={toggleShortCircuit}
-              disabled={shortCircuitsRemaining === 0 && !isShortCircuitActive}
-            >
-              <Image 
-                source={require('./assets/court_circuit.png')} 
-                style={styles.shortCircuitIcon}
-                resizeMode="contain"
-              />
-              {!isShortCircuitActive && (
-                <Text style={styles.shortCircuitCount}>{shortCircuitsRemaining}</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+          {/* Short Circuit button - show if free mode or level has short circuits */}
+          {(isFreeModeActive || shortCircuitsRemaining > 0 || isShortCircuitActive) && (
+            <View style={styles.powerUpWrapper}>
+              <TouchableOpacity
+                style={[
+                  styles.shortCircuitButton,
+                  shortCircuitsRemaining === 0 && styles.shortCircuitButtonDisabled,
+                  isShortCircuitActive && styles.shortCircuitButtonActive,
+                ]}
+                onPress={toggleShortCircuit}
+                disabled={shortCircuitsRemaining === 0 && !isShortCircuitActive}
+              >
+                <Image 
+                  source={require('./assets/court_circuit.png')} 
+                  style={styles.shortCircuitIcon}
+                  resizeMode="contain"
+                />
+                {!isShortCircuitActive && (
+                  <Text style={styles.shortCircuitCount}>{shortCircuitsRemaining}</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
           
-          {/* Reprogram button */}
-          <View style={styles.powerUpWrapper}>
-            <TouchableOpacity
-              style={[
-                styles.reprogramButton,
-                reprogramsRemaining === 0 && styles.reprogramButtonDisabled,
-                isReprogramActive && styles.reprogramButtonActive,
-              ]}
-              onPress={isReprogramActive ? cancelReprogram : openReprogramModal}
-              disabled={reprogramsRemaining === 0 && !isReprogramActive}
-            >
-              <Image 
-                source={require('./assets/reprogram.png')} 
-                style={styles.reprogramIcon}
-                resizeMode="contain"
-              />
-              {!isReprogramActive && (
-                <Text style={styles.reprogramCount}>{reprogramsRemaining}</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+          {/* Reprogram button - show if free mode or level has reprograms */}
+          {(isFreeModeActive || reprogramsRemaining > 0 || isReprogramActive) && (
+            <View style={styles.powerUpWrapper}>
+              <TouchableOpacity
+                style={[
+                  styles.reprogramButton,
+                  reprogramsRemaining === 0 && styles.reprogramButtonDisabled,
+                  isReprogramActive && styles.reprogramButtonActive,
+                ]}
+                onPress={isReprogramActive ? cancelReprogram : openReprogramModal}
+                disabled={reprogramsRemaining === 0 && !isReprogramActive}
+              >
+                <Image 
+                  source={require('./assets/reprogram.png')} 
+                  style={styles.reprogramIcon}
+                  resizeMode="contain"
+                />
+                {!isReprogramActive && (
+                  <Text style={styles.reprogramCount}>{reprogramsRemaining}</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       )}
       
       {/* Hint text for active power-ups */}
-      {isFreeModeActive && (isShortCircuitActive || isReprogramActive) && (
+      {(isShortCircuitActive || isReprogramActive) && (
         <Text style={styles.powerUpHint}>
           {isShortCircuitActive ? 'Touchez une case à détruire' : `Touchez une case pour la changer en ${reprogramSelectedValue}`}
         </Text>

@@ -21,6 +21,10 @@ const LEVEL_IMAGES = {
   13: require('../assets/_double_vis_vert.png'),
   14: require('../assets/_fer_jaune.png'),
   15: require('../assets/_fusible.png'),
+  16: require('../assets/pile_eclair.png'),
+  17: require('../assets/nervous.png'),
+  18: require('../assets/max_point.png'),
+  19: require('../assets/eye.png'),
 };
 
 /**

@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     color: '#E8943A',
   },
   gridContainer: {
-    width: '88%',
+    width: '96%',
     alignItems: 'center',
   },
   grid: {

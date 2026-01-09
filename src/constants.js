@@ -5,6 +5,7 @@
 
 // Grid configuration
 export const GRID_SIZE = 6;
+export const MAX_GRID_SIZE = 6; // Maximum grid size to avoid alignment issues on some devices
 export const MAX_VALUE = 5;
 export const INITIAL_STOCK = 50;
 export const GRID_PADDING = 6;

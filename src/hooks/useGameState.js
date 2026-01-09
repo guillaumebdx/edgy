@@ -12,6 +12,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import {
   GRID_SIZE as DEFAULT_GRID_SIZE,
+  MAX_GRID_SIZE,
   INITIAL_STOCK as DEFAULT_STOCK,
   MAX_VALUE as DEFAULT_MAX_VALUE,
   GRID_PADDING,
@@ -50,12 +51,17 @@ import { playSuccessSound, playErrorSound, playLandingSound, playChallengeSound,
  */
 const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   // Extract level parameters with defaults
-  const gridSize = levelConfig?.gridSize || DEFAULT_GRID_SIZE;
+  // Cap gridSize to MAX_GRID_SIZE to avoid alignment issues on some devices
+  const gridSize = Math.min(levelConfig?.gridSize || DEFAULT_GRID_SIZE, MAX_GRID_SIZE);
   const maxValue = levelConfig?.maxValue || DEFAULT_MAX_VALUE;
   const initialStock = levelConfig?.stock || DEFAULT_STOCK;
   const targetScore = levelConfig?.targetScore || null;
   const initialShuffles = levelConfig?.shuffles || 0;
   const isFreeMode = levelConfig?.isFreeMode || false;
+  
+  // Power-ups from level config (or defaults for free mode)
+  const initialShortCircuits = levelConfig?.shortCircuits ?? (isFreeMode ? 1 : 0);
+  const initialReprograms = levelConfig?.reprograms ?? (isFreeMode ? 1 : 0);
   
   // Tutorial configuration
   const tutorial = levelConfig?.tutorial || null;
@@ -115,14 +121,12 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   const [isShuffling, setIsShuffling] = useState(false);
   const [noMovesAvailable, setNoMovesAvailable] = useState(false);
   
-  // Short circuit state (Free Mode only)
-  const initialShortCircuits = isFreeMode ? 1 : 0;
+  // Short circuit state
   const [shortCircuitsRemaining, setShortCircuitsRemaining] = useState(initialShortCircuits);
   const [isShortCircuitActive, setIsShortCircuitActive] = useState(false);
   const [shortCircuitCell, setShortCircuitCell] = useState(null); // Cell being destroyed by short circuit
   
-  // Reprogram state (Free Mode only)
-  const initialReprograms = isFreeMode ? 1 : 0;
+  // Reprogram state
   const [reprogramsRemaining, setReprogramsRemaining] = useState(initialReprograms);
   const [isReprogramModalOpen, setIsReprogramModalOpen] = useState(false);
   const [reprogramSelectedValue, setReprogramSelectedValue] = useState(null); // Value to set on cell
