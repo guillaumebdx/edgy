@@ -303,6 +303,19 @@ export const CAREER_LEVELS = [
     shortCircuits: 5,
     challenge: null,
   },
+  {
+    id: 20,
+    name: 'Interférences',
+    gridSize: 6,
+    maxValue: 5,
+    stock: 40,
+    targetScore: 11500,
+    shuffles: 2,
+    glitches: 2,
+    shortCircuits: 1,
+    reprograms: 1,
+    challenge: null,
+  },
 ];
 
 /**

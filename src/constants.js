@@ -10,6 +10,9 @@ export const MAX_VALUE = 5;
 export const INITIAL_STOCK = 50;
 export const GRID_PADDING = 6;
 
+// Special cell types
+export const GLITCH_VALUE = -1; // Glitch cells are non-selectable obstacles
+
 // Color palette for cell values (Circuit/Logic theme)
 // Functional charge-level palette: high contrast between values
 // Low values = cool/dim, High values = warm/bright

@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -14,7 +14,10 @@ import Animated, {
   withDelay,
   Easing,
 } from 'react-native-reanimated';
-import { GRID_SIZE, MAX_VALUE, COLOR_MAP, ANIMATION, NEUTRAL_COLOR } from '../constants';
+import { GRID_SIZE, MAX_VALUE, COLOR_MAP, ANIMATION, NEUTRAL_COLOR, GLITCH_VALUE } from '../constants';
+
+// Glitch image
+const glitchImage = require('../../assets/glitch.png');
 
 const AnimatedCell = ({
   value,
@@ -37,6 +40,8 @@ const AnimatedCell = ({
   isShuffling = false,
   // Short circuit animation
   isShortCircuit = false,
+  // Rejected interaction animation (glitch cells)
+  isRejected = false,
 }) => {
   // Calculate cell size based on gridSize
   const cellSizePercent = 100 / gridSize;
@@ -46,9 +51,12 @@ const AnimatedCell = ({
     return <View style={[styles.cell, { width: `${cellSizePercent}%`, height: `${cellSizePercent}%` }]} />;
   }
 
+  // Check if this is a glitch cell
+  const isGlitch = value === GLITCH_VALUE;
+
   // Get color data, clamping to maxValue for display
-  const displayValue = value > maxValue ? maxValue : value;
-  const colorData = COLOR_MAP[displayValue] || COLOR_MAP[1];
+  const displayValue = isGlitch ? 1 : (value > maxValue ? maxValue : value);
+  const colorData = isGlitch ? { base: '#1a1a2e', top: '#252540', bottom: '#101020', border: '#0a0a15' } : (COLOR_MAP[displayValue] || COLOR_MAP[1]);
 
   // Animation shared values
   const shakeAnim = useSharedValue(0);
@@ -189,6 +197,23 @@ const AnimatedCell = ({
     }
   }, [isShortCircuit]);
 
+  // Rejected interaction animation (glitch cells - shake horizontally)
+  const rejectShake = useSharedValue(0);
+  useEffect(() => {
+    if (isRejected) {
+      rejectShake.value = withSequence(
+        withTiming(-8, { duration: 50 }),
+        withTiming(8, { duration: 50 }),
+        withTiming(-6, { duration: 50 }),
+        withTiming(6, { duration: 50 }),
+        withTiming(-3, { duration: 50 }),
+        withTiming(0, { duration: 50 })
+      );
+    } else {
+      rejectShake.value = 0;
+    }
+  }, [isRejected]);
+
   // Fall animation after gravity
   useEffect(() => {
     if (isFalling && fallDistance > 0) {
@@ -207,7 +232,7 @@ const AnimatedCell = ({
   // Combined animated style
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
-      { translateX: shakeAnim.value },
+      { translateX: shakeAnim.value + rejectShake.value },
       { translateY: translateY.value + entryTranslateY.value },
       { scale: scaleAnim.value * pressScale.value * entryScale.value * shuffleScale.value },
       { rotateZ: `${shuffleRotate.value}deg` },
@@ -252,11 +277,14 @@ const AnimatedCell = ({
             </View>
           )}
           
-          {/* Cell value - technical typography */}
-          {showValue && (
+          {/* Cell value - technical typography or glitch image */}
+          {showValue && !isGlitch && (
             <Text style={[styles.cellText, isExceeded && styles.cellTextExceeded, isInPath && styles.cellTextActive]}>
               {value > MAX_VALUE ? `${value}` : value}
             </Text>
+          )}
+          {isGlitch && (
+            <Image source={glitchImage} style={styles.glitchImage} resizeMode="contain" />
           )}
           
           {/* Subtle bottom gradient for depth */}
@@ -409,6 +437,11 @@ const styles = StyleSheet.create({
     fontSize: 7,
     fontWeight: '600',
     fontFamily: 'monospace',
+  },
+  glitchImage: {
+    width: '70%',
+    height: '70%',
+    zIndex: 1,
   },
 });
 

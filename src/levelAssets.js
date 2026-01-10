@@ -25,6 +25,7 @@ const LEVEL_IMAGES = {
   17: require('../assets/nervous.png'),
   18: require('../assets/max_point.png'),
   19: require('../assets/eye.png'),
+  20: require('../assets/glitch_level.png'),
 };
 
 /**

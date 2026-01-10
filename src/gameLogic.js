@@ -3,19 +3,32 @@
  * Handles grid management, move validation, gravity, and game state checks
  */
 
-import { GRID_SIZE, MAX_VALUE } from './constants';
+import { GRID_SIZE, MAX_VALUE, GLITCH_VALUE } from './constants';
 
 /**
  * Generates a new random grid and initial preview row
  * @param {number} gridSize - Size of the grid (default from constants)
  * @param {number} maxValue - Maximum cell value (default from constants)
  * @param {number} stockCount - Number of stock cells remaining (just a counter)
+ * @param {number} glitchCount - Number of glitch cells to place (default 0)
  * @returns {{grid: number[], previewRow: number[], stockCount: number}} Grid, preview row, and stock counter
  */
-export const generateGrid = (gridSize = GRID_SIZE, maxValue = MAX_VALUE, stockCount = 0) => {
+export const generateGrid = (gridSize = GRID_SIZE, maxValue = MAX_VALUE, stockCount = 0, glitchCount = 0) => {
   const grid = [];
   for (let i = 0; i < gridSize * gridSize; i++) {
     grid.push(Math.floor(Math.random() * maxValue) + 1);
+  }
+  
+  // Place glitches at random positions
+  if (glitchCount > 0) {
+    const totalCells = gridSize * gridSize;
+    const glitchPositions = new Set();
+    while (glitchPositions.size < glitchCount && glitchPositions.size < totalCells) {
+      glitchPositions.add(Math.floor(Math.random() * totalCells));
+    }
+    glitchPositions.forEach(pos => {
+      grid[pos] = GLITCH_VALUE;
+    });
   }
   
   // Preview row is like "row -1" - the next cells that will fall into each column
@@ -174,7 +187,8 @@ export const calculateFallDistances = (oldGrid, newGrid, gridSize = GRID_SIZE) =
 export const hasValidMove = (grid, gridSize = GRID_SIZE) => {
   for (let startIndex = 0; startIndex < grid.length; startIndex++) {
     const startValue = grid[startIndex];
-    if (startValue === null) continue;
+    // Skip null and glitch cells
+    if (startValue === null || startValue === GLITCH_VALUE) continue;
     
     const visited = new Set();
     const queue = [{ index: startIndex, pathLength: 1 }];
@@ -360,7 +374,8 @@ export const hasValidMoves = (grid, gridSize = GRID_SIZE) => {
   // For each cell, check if we can form a valid path starting from it
   for (let startIndex = 0; startIndex < grid.length; startIndex++) {
     const value = grid[startIndex];
-    if (value === null) continue;
+    // Skip null and glitch cells
+    if (value === null || value === GLITCH_VALUE) continue;
     
     // We need at least (value + 1) cells to form a valid path
     const requiredLength = value + 1;

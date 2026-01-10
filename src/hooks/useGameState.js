@@ -17,6 +17,7 @@ import {
   MAX_VALUE as DEFAULT_MAX_VALUE,
   GRID_PADDING,
   ANIMATION,
+  GLITCH_VALUE,
 } from '../constants';
 import {
   generateGrid,
@@ -63,6 +64,9 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   const initialShortCircuits = levelConfig?.shortCircuits ?? (isFreeMode ? 1 : 0);
   const initialReprograms = levelConfig?.reprograms ?? (isFreeMode ? 1 : 0);
   
+  // Glitches - obstacles that can't be selected (only in career mode levels)
+  const glitchCount = levelConfig?.glitches || 0;
+  
   // Tutorial configuration
   const tutorial = levelConfig?.tutorial || null;
   const isTutorialLevel = !!tutorial;
@@ -78,7 +82,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       }
       return grid;
     }
-    const { grid } = generateGrid(gridSize, maxValue, initialStock);
+    const { grid } = generateGrid(gridSize, maxValue, initialStock, glitchCount);
     return grid;
   });
   const [exceededCells, setExceededCells] = useState([]);
@@ -125,6 +129,9 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
   const [shortCircuitsRemaining, setShortCircuitsRemaining] = useState(initialShortCircuits);
   const [isShortCircuitActive, setIsShortCircuitActive] = useState(false);
   const [shortCircuitCell, setShortCircuitCell] = useState(null); // Cell being destroyed by short circuit
+  
+  // Rejected cell state (for visual feedback when trying to interact with glitch)
+  const [rejectedCell, setRejectedCell] = useState(null);
   
   // Reprogram state
   const [reprogramsRemaining, setReprogramsRemaining] = useState(initialReprograms);
@@ -203,7 +210,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
         newPreviewRow = newPreview;
         newStockCount = newCount;
       } else {
-        const result = generateGrid(gridSize, maxValue, initialStock);
+        const result = generateGrid(gridSize, maxValue, initialStock, glitchCount);
         newGrid = result.grid;
         newPreviewRow = result.previewRow;
         newStockCount = result.stockCount;
@@ -244,7 +251,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       setShakingCells([]);
       setFallingCells({});
     }
-  }, [levelId, gridSize, maxValue, initialStock, initialShuffles, initialShortCircuits, initialReprograms, tutorial]);
+  }, [levelId, gridSize, maxValue, initialStock, initialShuffles, initialShortCircuits, initialReprograms, tutorial, glitchCount]);
 
   /**
    * Handles grid layout measurement for touch coordinate conversion
@@ -518,6 +525,9 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     
     // IMPORTANT: Ignore empty cells (null value = no cell, stock depleted)
     if (currentGridData[cellIndex] === null) return;
+    
+    // Block glitch cells from being added to path
+    if (currentGridData[cellIndex] === GLITCH_VALUE) return;
     
     const currentPath = pathRef.current;
     
@@ -824,7 +834,7 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       newPreviewRow = result.previewRow;
       newStockCount = result.stockCount;
     } else {
-      const result = generateGrid(gridSizeRef.current, maxValueRef.current, initialStock);
+      const result = generateGrid(gridSizeRef.current, maxValueRef.current, initialStock, glitchCount);
       newGrid = result.grid;
       newPreviewRow = result.previewRow;
       newStockCount = result.stockCount;
@@ -878,6 +888,13 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       
       // If reprogram is active, change the cell value
       if (isReprogramActive && reprogramSelectedValue !== null && cellIndex !== null && gridData[cellIndex] !== null) {
+        // Block reprogram on glitch cells - show rejection feedback
+        if (gridData[cellIndex] === GLITCH_VALUE) {
+          setRejectedCell(cellIndex);
+          setTimeout(() => setRejectedCell(null), 300);
+          return;
+        }
+        
         // Consume the reprogram
         setReprogramsRemaining(prev => prev - 1);
         setIsReprogramActive(false);
@@ -901,6 +918,13 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
       // If short circuit is active, use it on the cell instead of starting a path
       if (isShortCircuitActive && cellIndex !== null && gridData[cellIndex] !== null) {
         if (shortCircuitsRemaining <= 0) return;
+        
+        // Block short circuit on glitch cells - show rejection feedback
+        if (gridData[cellIndex] === GLITCH_VALUE) {
+          setRejectedCell(cellIndex);
+          setTimeout(() => setRejectedCell(null), 300);
+          return;
+        }
         
         // Store the cell index to destroy (closure-safe)
         const cellToDestroy = cellIndex;
@@ -953,7 +977,8 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
         return;
       }
       
-      if (cellIndex !== null && gridData[cellIndex] !== null) {
+      // Block glitch cells from starting a path
+      if (cellIndex !== null && gridData[cellIndex] !== null && gridData[cellIndex] !== GLITCH_VALUE) {
         pathValueRef.current = gridData[cellIndex];
         pathRef.current = [cellIndex];
         setPath([cellIndex]);
@@ -1000,6 +1025,8 @@ const useGameState = (levelConfig = null, tutorialHandlers = null) => {
     shortCircuitsRemaining,
     isShortCircuitActive,
     shortCircuitCell,
+    // Rejected cell (glitch interaction feedback)
+    rejectedCell,
     // Reprogram state (Free Mode)
     reprogramsRemaining,
     isReprogramModalOpen,

@@ -160,6 +160,8 @@ export default function App() {
     shortCircuitsRemaining,
     isShortCircuitActive,
     shortCircuitCell,
+    // Rejected cell (glitch interaction feedback)
+    rejectedCell,
     // Reprogram (Free Mode)
     reprogramsRemaining,
     isReprogramModalOpen,
@@ -553,6 +555,7 @@ export default function App() {
                   : 0;
 
               const isShortCircuitTarget = shortCircuitCell === index;
+              const isRejected = rejectedCell === index;
               
               return (
                 <AnimatedCell
@@ -574,6 +577,7 @@ export default function App() {
                   entryDelay={entryDelay}
                   isShuffling={isShuffling}
                   isShortCircuit={isShortCircuitTarget}
+                  isRejected={isRejected}
                 />
               );
             })}
