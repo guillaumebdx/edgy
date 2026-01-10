@@ -9,13 +9,24 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import fr from './fr.json';
 import en from './en.json';
+import de from './de.json';
+import es from './es.json';
+import it from './it.json';
+import pt from './pt.json';
 
 const LANGUAGE_KEY = '@edgy_language';
+
+// Supported language codes
+const SUPPORTED_LANGUAGES = ['fr', 'en', 'de', 'es', 'it', 'pt'];
 
 // Create i18n instance
 const i18n = new I18n({
   fr,
   en,
+  de,
+  es,
+  it,
+  pt,
 });
 
 // Set default locale based on device
@@ -26,6 +37,10 @@ i18n.enableFallback = true;
 export const LANGUAGES = [
   { code: 'fr', name: 'Français', flag: '🇫🇷' },
   { code: 'en', name: 'English', flag: '🇬🇧' },
+  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+  { code: 'pt', name: 'Português', flag: '🇧🇷' },
 ];
 
 /**
@@ -36,12 +51,12 @@ export const initLanguage = async () => {
     // Try to load saved preference
     const savedLanguage = await AsyncStorage.getItem(LANGUAGE_KEY);
     
-    if (savedLanguage && (savedLanguage === 'fr' || savedLanguage === 'en')) {
+    if (savedLanguage && SUPPORTED_LANGUAGES.includes(savedLanguage)) {
       i18n.locale = savedLanguage;
     } else {
       // Auto-detect from device
       const deviceLocale = Localization.getLocales()[0]?.languageCode || 'en';
-      i18n.locale = deviceLocale === 'fr' ? 'fr' : 'en';
+      i18n.locale = SUPPORTED_LANGUAGES.includes(deviceLocale) ? deviceLocale : 'en';
     }
     
     return i18n.locale;
@@ -57,7 +72,7 @@ export const initLanguage = async () => {
  */
 export const setLanguage = async (languageCode) => {
   try {
-    if (languageCode === 'fr' || languageCode === 'en') {
+    if (SUPPORTED_LANGUAGES.includes(languageCode)) {
       i18n.locale = languageCode;
       await AsyncStorage.setItem(LANGUAGE_KEY, languageCode);
       return true;

@@ -1,0 +1,104 @@
+{
+  "common": {
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "close": "Schließen",
+    "back": "← Zurück",
+    "points": "Punkte",
+    "pts": "Pkt",
+    "level": "Level",
+    "score": "PUNKTE",
+    "stock": "VORRAT",
+    "max": "MAX",
+    "on": "AN",
+    "off": "AUS",
+    "remaining": "übrig"
+  },
+  "menu": {
+    "continue": "Fortsetzen",
+    "newGame": "Neues Spiel"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "sound": "Ton",
+    "rules": "Spielregeln",
+    "credits": "Credits",
+    "resetBestScore": "Highscore zurücksetzen",
+    "resetProgress": "Von vorne beginnen",
+    "version": "Version",
+    "creditsText": "App erstellt mit ❤️ von\nGuillaume HARARI\n(vibe coded 😉)",
+    "confirmResetProgress": "Bist du sicher, dass du deinen gesamten Fortschritt zurücksetzen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "confirmResetBestScore": "Bist du sicher, dass du deinen Highscore zurücksetzen möchtest?",
+    "resetProgressTitle": "Von vorne beginnen",
+    "resetBestScoreTitle": "Highscore zurücksetzen"
+  },
+  "careerMap": {
+    "circuit": "SCHALTKREIS",
+    "freeMode": "FREIER MODUS",
+    "freeModeSubtitle": "Spiele ohne Grenzen • Brich deinen Rekord",
+    "bestScore": "Highscore:",
+    "debugTitle": "🛠️ Debug - Gehe zu Level"
+  },
+  "levelInfo": {
+    "scoreVsRecord": "PUNKTE vs REKORD"
+  },
+  "gameOver": {
+    "gameOver": "Spiel beendet",
+    "careerComplete": "Karriere abgeschlossen!",
+    "levelComplete": "Level geschafft!",
+    "levelCompleteWithNumber": "Level {{level}} geschafft!",
+    "objective": "Ziel:",
+    "nextLevel": "Nächstes Level",
+    "replay": "Nochmal",
+    "retry": "Erneut versuchen",
+    "newRecord": "Neuer Rekord!",
+    "insufficientScore": "Punktzahl zu niedrig. Ziel: {{target}}"
+  },
+  "tutorial": {
+    "step1": "Verbinde 2 gleiche Zellen",
+    "step2": "2 Zellen = Wert 2!",
+    "step3": "3 Zellen = Wert 3",
+    "step4": "Überschreite MAX zum Zerstören!",
+    "step5": "Erreiche das Ziel zum Gewinnen!"
+  },
+  "powerUps": {
+    "shortCircuitHint": "Tippe auf eine Zelle zum Zerstören",
+    "reprogramHint": "Tippe auf eine Zelle um sie zu ändern in",
+    "reprogramTitle": "Umprogrammieren",
+    "reprogramSubtitle": "Wähle den neuen Wert"
+  },
+  "challenges": {
+    "columnOfFives": "Eine komplette Spalte mit 5ern ausrichten",
+    "rowOfFives": "Eine komplette Reihe mit 5ern ausrichten"
+  },
+  "celebrations": {
+    "perfect": "PERFEKT!",
+    "incredible": "UNGLAUBLICH!",
+    "wellPlayed": "GUT GESPIELT!",
+    "superb": "SUPER!",
+    "magnificent": "GROSSARTIG!",
+    "excellent": "EXZELLENT!"
+  },
+  "levels": {
+    "0": "Tutorial",
+    "1": "Einführung",
+    "2": "Einfache Schaltkreise",
+    "3": "Fortgeschrittene Logik",
+    "4": "Hochspannung",
+    "5": "Schaltkreis-Meister",
+    "6": "Perfekte Spalte",
+    "7": "Starkes Signal",
+    "8": "Magnetische Anziehung",
+    "9": "Entspannende Spule",
+    "10": "Integrierter Schaltkreis",
+    "11": "Mini-Konzept",
+    "12": "Kondensator",
+    "13": "Doppelschraube",
+    "14": "Lötkolben",
+    "15": "Sicherung",
+    "16": "Brutale Entladung",
+    "17": "Mini-Vorrat",
+    "18": "Ultimativer Score",
+    "19": "Mikrochip"
+  }
+}

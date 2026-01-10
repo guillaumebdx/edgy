@@ -11,7 +11,8 @@
     "stock": "STOCK",
     "max": "MAX",
     "on": "ON",
-    "off": "OFF"
+    "off": "OFF",
+    "remaining": "remaining"
   },
   "menu": {
     "continue": "Continue",
@@ -45,11 +46,13 @@
     "gameOver": "Game Over",
     "careerComplete": "Career Complete!",
     "levelComplete": "Level Complete!",
+    "levelCompleteWithNumber": "Level {{level}} Complete!",
     "objective": "Objective:",
     "nextLevel": "Next Level",
     "replay": "Replay",
     "retry": "Retry",
-    "newRecord": "New Record!"
+    "newRecord": "New Record!",
+    "insufficientScore": "Score too low. Target: {{target}}"
   },
   "tutorial": {
     "step1": "Connect 2 identical cells",

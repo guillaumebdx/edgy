@@ -107,22 +107,19 @@ const SettingsMenu = ({
           <Text style={styles.title}>{t('settings.title')}</Text>
 
           {/* Language Selector */}
-          <View style={styles.menuItem}>
-            <Text style={styles.menuItemText}>🌐</Text>
-            <View style={styles.languageSelector}>
-              {languages.map((lang) => (
-                <TouchableOpacity
-                  key={lang.code}
-                  style={[
-                    styles.languageButton,
-                    locale === lang.code && styles.languageButtonActive,
-                  ]}
-                  onPress={() => changeLanguage(lang.code)}
-                >
-                  <Text style={styles.languageFlag}>{lang.flag}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+          <View style={styles.languageSelectorRow}>
+            {languages.map((lang) => (
+              <TouchableOpacity
+                key={lang.code}
+                style={[
+                  styles.languageButton,
+                  locale === lang.code && styles.languageButtonActive,
+                ]}
+                onPress={() => changeLanguage(lang.code)}
+              >
+                <Text style={styles.languageFlag}>{lang.flag}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
 
           {/* Sound Toggle */}
@@ -226,13 +223,17 @@ const styles = StyleSheet.create({
   warningText: {
     color: '#f39c12',
   },
-  languageSelector: {
+  languageSelectorRow: {
     flexDirection: 'row',
-    gap: 8,
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 16,
+    paddingVertical: 8,
   },
   languageButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
     borderRadius: 8,
     backgroundColor: 'rgba(100, 100, 100, 0.3)',
     borderWidth: 2,
@@ -243,7 +244,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(100, 160, 180, 0.6)',
   },
   languageFlag: {
-    fontSize: 24,
+    fontSize: 22,
   },
   toggle: {
     backgroundColor: 'rgba(100, 100, 100, 0.4)',

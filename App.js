@@ -328,7 +328,7 @@ export default function App() {
             isFreeMode: true,
             isNewHighScore: isNewHighScore && finalScore > 0,
             highScore: currentHighScore,
-            message: isNewHighScore && finalScore > 0 ? 'Nouveau Record !' : 'Partie terminée',
+            message: isNewHighScore && finalScore > 0 ? t('gameOver.newRecord') : t('gameOver.gameOver'),
           });
           return;
         }
@@ -487,7 +487,7 @@ export default function App() {
         </View>
         <View style={styles.stockContainer}>
           <Text style={styles.stockText}>{stock}</Text>
-          <Text style={styles.stockLabel}>restantes</Text>
+          <Text style={styles.stockLabel}>{t('common.remaining')}</Text>
         </View>
         {/* Shuffle button - only shown when shuffles available */}
         {(activeLevelConfig?.shuffles > 0 || shufflesRemaining > 0) && (

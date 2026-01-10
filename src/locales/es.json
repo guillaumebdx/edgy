@@ -1,0 +1,104 @@
+{
+  "common": {
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "close": "Cerrar",
+    "back": "← Volver",
+    "points": "puntos",
+    "pts": "pts",
+    "level": "Nivel",
+    "score": "PUNTOS",
+    "stock": "RESERVA",
+    "max": "MÁX",
+    "on": "SÍ",
+    "off": "NO",
+    "remaining": "restantes"
+  },
+  "menu": {
+    "continue": "Continuar",
+    "newGame": "Nueva partida"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "sound": "Sonido",
+    "rules": "Reglas del juego",
+    "credits": "Créditos",
+    "resetBestScore": "Reiniciar mejor puntuación",
+    "resetProgress": "Empezar de cero",
+    "version": "Versión",
+    "creditsText": "App creada con ❤️ por\nGuillaume HARARI\n(vibe coded 😉)",
+    "confirmResetProgress": "¿Estás seguro de que quieres reiniciar todo tu progreso? Esta acción no se puede deshacer.",
+    "confirmResetBestScore": "¿Estás seguro de que quieres reiniciar tu mejor puntuación?",
+    "resetProgressTitle": "Empezar de cero",
+    "resetBestScoreTitle": "Reiniciar mejor puntuación"
+  },
+  "careerMap": {
+    "circuit": "CIRCUITO",
+    "freeMode": "MODO LIBRE",
+    "freeModeSubtitle": "Juega sin límites • Bate tu récord",
+    "bestScore": "Mejor puntuación:",
+    "debugTitle": "🛠️ Debug - Ir al nivel"
+  },
+  "levelInfo": {
+    "scoreVsRecord": "PUNTOS vs RÉCORD"
+  },
+  "gameOver": {
+    "gameOver": "Fin del juego",
+    "careerComplete": "¡Carrera completada!",
+    "levelComplete": "¡Nivel completado!",
+    "levelCompleteWithNumber": "¡Nivel {{level}} completado!",
+    "objective": "Objetivo:",
+    "nextLevel": "Siguiente nivel",
+    "replay": "Repetir",
+    "retry": "Reintentar",
+    "newRecord": "¡Nuevo récord!",
+    "insufficientScore": "Puntuación insuficiente. Objetivo: {{target}}"
+  },
+  "tutorial": {
+    "step1": "Conecta 2 celdas iguales",
+    "step2": "2 celdas = valor 2!",
+    "step3": "3 celdas = valor 3",
+    "step4": "¡Supera MÁX para destruir!",
+    "step5": "¡Alcanza el objetivo para ganar!"
+  },
+  "powerUps": {
+    "shortCircuitHint": "Toca una celda para destruir",
+    "reprogramHint": "Toca una celda para cambiarla a",
+    "reprogramTitle": "Reprogramar",
+    "reprogramSubtitle": "Elige el nuevo valor"
+  },
+  "challenges": {
+    "columnOfFives": "Alinear una columna completa de 5s",
+    "rowOfFives": "Alinear una fila completa de 5s"
+  },
+  "celebrations": {
+    "perfect": "¡PERFECTO!",
+    "incredible": "¡INCREÍBLE!",
+    "wellPlayed": "¡BIEN JUGADO!",
+    "superb": "¡SOBERBIO!",
+    "magnificent": "¡MAGNÍFICO!",
+    "excellent": "¡EXCELENTE!"
+  },
+  "levels": {
+    "0": "Tutorial",
+    "1": "Iniciación",
+    "2": "Circuitos simples",
+    "3": "Lógica avanzada",
+    "4": "Alta tensión",
+    "5": "Maestro del circuito",
+    "6": "Columna perfecta",
+    "7": "Señal fuerte",
+    "8": "Atracción magnética",
+    "9": "Bobina relajante",
+    "10": "Circuito integrado",
+    "11": "Mini concepto",
+    "12": "Condensador",
+    "13": "Doble tornillo",
+    "14": "Soldador",
+    "15": "Fusible",
+    "16": "Descarga brutal",
+    "17": "Mini reserva",
+    "18": "Puntuación máxima",
+    "19": "Microchip"
+  }
+}

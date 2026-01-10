@@ -15,6 +15,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { getLevelConfig, levelExists, getTotalLevels } from '../careerLevels';
+import { t } from '../locales';
 import { 
   initDatabase, 
   loadCareerProgress, 
@@ -156,7 +157,7 @@ const useCareerState = () => {
           success: true,
           careerCompleted: false,
           nextLevel: null,
-          message: `Niveau ${playingLevelNumber} terminé !`,
+          message: t('gameOver.levelCompleteWithNumber', { level: playingLevelNumber }),
           completedLevel: playingLevelNumber,
           isReplay: true,
           starsEarned,
@@ -179,7 +180,7 @@ const useCareerState = () => {
         success: true,
         careerCompleted: !hasNextLevel,
         nextLevel: hasNextLevel ? nextLevelNumber : null,
-        message: `Niveau ${playingLevelNumber} terminé !`,
+        message: t('gameOver.levelCompleteWithNumber', { level: playingLevelNumber }),
         completedLevel: playingLevelNumber,
         isReplay: false,
         starsEarned,
@@ -190,7 +191,7 @@ const useCareerState = () => {
         success: false,
         careerCompleted: false,
         nextLevel: playingLevelNumber,
-        message: `Score insuffisant. Objectif : ${level.targetScore}`,
+        message: t('gameOver.insufficientScore', { target: level.targetScore }),
         completedLevel: null,
         isReplay: isReplayingOldLevel,
         starsEarned: 0,

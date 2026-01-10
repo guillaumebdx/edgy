@@ -11,7 +11,8 @@
     "stock": "STOCK",
     "max": "MAX",
     "on": "ON",
-    "off": "OFF"
+    "off": "OFF",
+    "remaining": "restantes"
   },
   "menu": {
     "continue": "Continuer",
@@ -45,11 +46,13 @@
     "gameOver": "Partie terminée",
     "careerComplete": "Carrière terminée !",
     "levelComplete": "Niveau réussi !",
+    "levelCompleteWithNumber": "Niveau {{level}} terminé !",
     "objective": "Objectif :",
     "nextLevel": "Niveau suivant",
     "replay": "Rejouer",
     "retry": "Réessayer",
-    "newRecord": "Nouveau Record !"
+    "newRecord": "Nouveau Record !",
+    "insufficientScore": "Score insuffisant. Objectif : {{target}}"
   },
   "tutorial": {
     "step1": "Relie 2 cases identiques",

@@ -1,0 +1,104 @@
+{
+  "common": {
+    "cancel": "Annulla",
+    "confirm": "Conferma",
+    "close": "Chiudi",
+    "back": "← Indietro",
+    "points": "punti",
+    "pts": "pt",
+    "level": "Livello",
+    "score": "PUNTI",
+    "stock": "SCORTA",
+    "max": "MAX",
+    "on": "SÌ",
+    "off": "NO",
+    "remaining": "rimanenti"
+  },
+  "menu": {
+    "continue": "Continua",
+    "newGame": "Nuova partita"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "sound": "Suono",
+    "rules": "Regole del gioco",
+    "credits": "Crediti",
+    "resetBestScore": "Azzera miglior punteggio",
+    "resetProgress": "Ricomincia da zero",
+    "version": "Versione",
+    "creditsText": "App creata con ❤️ da\nGuillaume HARARI\n(vibe coded 😉)",
+    "confirmResetProgress": "Sei sicuro di voler azzerare tutti i tuoi progressi? Questa azione è irreversibile.",
+    "confirmResetBestScore": "Sei sicuro di voler azzerare il tuo miglior punteggio?",
+    "resetProgressTitle": "Ricomincia da zero",
+    "resetBestScoreTitle": "Azzera miglior punteggio"
+  },
+  "careerMap": {
+    "circuit": "CIRCUITO",
+    "freeMode": "MODALITÀ LIBERA",
+    "freeModeSubtitle": "Gioca senza limiti • Batti il tuo record",
+    "bestScore": "Miglior punteggio:",
+    "debugTitle": "🛠️ Debug - Vai al livello"
+  },
+  "levelInfo": {
+    "scoreVsRecord": "PUNTI vs RECORD"
+  },
+  "gameOver": {
+    "gameOver": "Partita terminata",
+    "careerComplete": "Carriera completata!",
+    "levelComplete": "Livello completato!",
+    "levelCompleteWithNumber": "Livello {{level}} completato!",
+    "objective": "Obiettivo:",
+    "nextLevel": "Livello successivo",
+    "replay": "Rigioca",
+    "retry": "Riprova",
+    "newRecord": "Nuovo record!",
+    "insufficientScore": "Punteggio insufficiente. Obiettivo: {{target}}"
+  },
+  "tutorial": {
+    "step1": "Collega 2 celle uguali",
+    "step2": "2 celle = valore 2!",
+    "step3": "3 celle = valore 3",
+    "step4": "Supera MAX per distruggere!",
+    "step5": "Raggiungi l'obiettivo per vincere!"
+  },
+  "powerUps": {
+    "shortCircuitHint": "Tocca una cella per distruggerla",
+    "reprogramHint": "Tocca una cella per cambiarla in",
+    "reprogramTitle": "Riprogramma",
+    "reprogramSubtitle": "Scegli il nuovo valore"
+  },
+  "challenges": {
+    "columnOfFives": "Allinea una colonna completa di 5",
+    "rowOfFives": "Allinea una riga completa di 5"
+  },
+  "celebrations": {
+    "perfect": "PERFETTO!",
+    "incredible": "INCREDIBILE!",
+    "wellPlayed": "BEN GIOCATO!",
+    "superb": "SUPERBO!",
+    "magnificent": "MAGNIFICO!",
+    "excellent": "ECCELLENTE!"
+  },
+  "levels": {
+    "0": "Tutorial",
+    "1": "Iniziazione",
+    "2": "Circuiti semplici",
+    "3": "Logica avanzata",
+    "4": "Alta tensione",
+    "5": "Maestro del circuito",
+    "6": "Colonna perfetta",
+    "7": "Segnale forte",
+    "8": "Attrazione magnetica",
+    "9": "Bobina rilassante",
+    "10": "Circuito integrato",
+    "11": "Mini concetto",
+    "12": "Condensatore",
+    "13": "Doppia vite",
+    "14": "Saldatore",
+    "15": "Fusibile",
+    "16": "Scarica brutale",
+    "17": "Mini scorta",
+    "18": "Punteggio massimo",
+    "19": "Microchip"
+  }
+}
