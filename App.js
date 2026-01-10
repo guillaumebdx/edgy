@@ -43,7 +43,7 @@ import {
 } from './src/components';
 import StockPreview from './src/components/StockPreview';
 import { getLevelConfig } from './src/careerLevels';
-import { useGameState, useCareerState, useTutorialState, useLevelEntryAnimation } from './src/hooks';
+import { useGameState, useCareerState, useTutorialState, useLevelEntryAnimation, useTranslation } from './src/hooks';
 import { initSounds, unloadSounds, startBackgroundMusic, stopBackgroundMusic, playLandingSound } from './src/sounds';
 import { saveHighScore, loadHighScore } from './src/persistence';
 
@@ -72,6 +72,8 @@ const FREE_MODE_CONFIG = {
  * Manages career mode progression and navigation
  */
 export default function App() {
+  const { t, getLevelName } = useTranslation();
+  
   // Current screen state
   const [currentScreen, setCurrentScreen] = useState(SCREENS.MENU);
 
@@ -436,7 +438,7 @@ export default function App() {
       {isFreeModeActive ? (
         <LevelInfo
           levelNumber={null}
-          levelName="Mode Libre"
+          levelName={t('careerMap.freeMode')}
           targetScore={null}
           currentScore={score}
           highScore={freeHighScore}
@@ -454,7 +456,7 @@ export default function App() {
       ) : playingLevel && (
         <LevelInfo
           levelNumber={playingLevelNumber}
-          levelName={playingLevel.name}
+          levelName={getLevelName(playingLevel.id)}
           targetScore={playingLevel.targetScore}
           currentScore={score}
           highScore={0}
@@ -663,7 +665,7 @@ export default function App() {
       {/* Hint text for active power-ups */}
       {(isShortCircuitActive || isReprogramActive) && (
         <Text style={styles.powerUpHint}>
-          {isShortCircuitActive ? 'Touchez une case à détruire' : `Touchez une case pour la changer en ${reprogramSelectedValue}`}
+          {isShortCircuitActive ? t('powerUps.shortCircuitHint') : `${t('powerUps.reprogramHint')} ${reprogramSelectedValue}`}
         </Text>
       )}
       
@@ -671,8 +673,8 @@ export default function App() {
       {isReprogramModalOpen && (
         <View style={styles.modalOverlay}>
           <View style={styles.reprogramModal}>
-            <Text style={styles.reprogramModalTitle}>Reprogrammation</Text>
-            <Text style={styles.reprogramModalSubtitle}>Choisissez la nouvelle valeur</Text>
+            <Text style={styles.reprogramModalTitle}>{t('powerUps.reprogramTitle')}</Text>
+            <Text style={styles.reprogramModalSubtitle}>{t('powerUps.reprogramSubtitle')}</Text>
             <View style={styles.reprogramValueGrid}>
               {Array.from({ length: maxValue - 1 }, (_, i) => i + 1).map((value) => (
                 <TouchableOpacity

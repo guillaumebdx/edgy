@@ -3,7 +3,8 @@
  * Handles score calculation, combo logic, and celebration triggers
  */
 
-import { CELEBRATION_THRESHOLDS, CELEBRATION_WORDS } from './constants';
+import { CELEBRATION_THRESHOLDS } from './constants';
+import { t } from './locales';
 
 /**
  * Calculates base points for a validated path
@@ -46,8 +47,18 @@ export const shouldCelebrate = (pathLength, combo, cellCount) => {
  * Gets a random celebration word
  * @returns {string} Random celebration message
  */
+const CELEBRATION_KEYS = [
+  'celebrations.perfect',
+  'celebrations.incredible',
+  'celebrations.wellPlayed',
+  'celebrations.superb',
+  'celebrations.magnificent',
+  'celebrations.excellent',
+];
+
 export const getRandomCelebrationWord = () => {
-  return CELEBRATION_WORDS[Math.floor(Math.random() * CELEBRATION_WORDS.length)];
+  const key = CELEBRATION_KEYS[Math.floor(Math.random() * CELEBRATION_KEYS.length)];
+  return t(key);
 };
 
 /**

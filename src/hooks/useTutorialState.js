@@ -10,6 +10,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { t } from '../locales';
 
 /**
  * Check if two paths are equivalent (same cells, either direction)
@@ -75,8 +76,9 @@ const useTutorialState = (tutorialConfig, isTutorialLevel) => {
   // Get expected path for current step
   const expectedPath = currentStep?.expectedPath || [];
   
-  // Get hint text for current step
-  const hint = currentStep?.hint || '';
+  // Get hint text for current step - use translation key if available
+  const stepId = currentStep?.id;
+  const hint = stepId ? t(`tutorial.step${stepId}`) : '';
   
   // Check if this is the last step
   const isLastStep = currentStep?.isLastStep || false;

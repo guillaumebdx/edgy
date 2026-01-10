@@ -7,6 +7,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { formatScore } from '../scoreManager';
+import useTranslation from '../hooks/useTranslation';
 
 const GameOverScreen = ({ 
   score, 
@@ -15,6 +16,8 @@ const GameOverScreen = ({
   onNextLevel = null,
   onVictoryOverride = null, // Called when we detect score >= target but levelResult said failure
 }) => {
+  const { t } = useTranslation();
+  
   // BULLETPROOF FIX: If score >= target, it's ALWAYS a victory, regardless of what levelResult says
   // This is the final safety net against any race condition bugs
   const targetScore = levelResult?.targetScore;
@@ -31,7 +34,7 @@ const GameOverScreen = ({
   let displayMessage = levelResult?.message;
   const isRaceConditionDetected = scoreReachedTarget && !levelResult?.success;
   if (isRaceConditionDetected) {
-    displayMessage = 'Niveau réussi !';
+    displayMessage = t('gameOver.levelComplete');
   }
   
   // Call victory override once when race condition is detected
@@ -56,15 +59,15 @@ const GameOverScreen = ({
         )}
         
         <Text style={styles.title}>
-          {isCareerComplete ? 'Carrière terminée !' : 'Partie terminée'}
+          {isCareerComplete ? t('gameOver.careerComplete') : t('gameOver.gameOver')}
         </Text>
         <Text style={styles.score}>{formatScore(score)}</Text>
-        <Text style={styles.label}>points</Text>
+        <Text style={styles.label}>{t('common.points')}</Text>
         
         {/* Target score reminder if failed */}
         {levelResult && !isLevelComplete && (
           <Text style={styles.targetReminder}>
-            Objectif : {levelResult.targetScore?.toLocaleString('fr-FR') || '—'}
+            {t('gameOver.objective')} {levelResult.targetScore?.toLocaleString() || '—'}
           </Text>
         )}
         
@@ -72,7 +75,7 @@ const GameOverScreen = ({
         <View style={styles.buttonContainer}>
           {isLevelComplete && !isCareerComplete && onNextLevel && (
             <TouchableOpacity style={styles.button} onPress={onNextLevel}>
-              <Text style={styles.buttonText}>Niveau suivant</Text>
+              <Text style={styles.buttonText}>{t('gameOver.nextLevel')}</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity 
@@ -80,7 +83,7 @@ const GameOverScreen = ({
             onPress={onRestart}
           >
             <Text style={[styles.buttonText, isLevelComplete && !isCareerComplete && styles.secondaryButtonText]}>
-              {isLevelComplete ? 'Rejouer' : 'Réessayer'}
+              {isLevelComplete ? t('gameOver.replay') : t('gameOver.retry')}
             </Text>
           </TouchableOpacity>
         </View>

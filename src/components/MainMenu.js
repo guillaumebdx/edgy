@@ -10,6 +10,7 @@
 
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import useTranslation from '../hooks/useTranslation';
 
 const MainMenu = ({ 
   onContinue, 
@@ -18,6 +19,8 @@ const MainMenu = ({
   isLoading,
   savedLevelNumber,
 }) => {
+  const { t } = useTranslation();
+  
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -43,9 +46,9 @@ const MainMenu = ({
             onPress={onContinue}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>Continuer</Text>
+            <Text style={styles.buttonText}>{t('menu.continue')}</Text>
             {savedLevelNumber && (
-              <Text style={styles.buttonSubtext}>Niveau {savedLevelNumber}</Text>
+              <Text style={styles.buttonSubtext}>{t('common.level')} {savedLevelNumber}</Text>
             )}
           </TouchableOpacity>
         )}
@@ -57,13 +60,13 @@ const MainMenu = ({
           activeOpacity={0.7}
         >
           <Text style={[styles.buttonText, hasSavedGame && styles.secondaryButtonText]}>
-            Nouvelle partie
+            {t('menu.newGame')}
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Version indicator */}
-      <Text style={styles.version}>v1.0</Text>
+      <Text style={styles.version}>v1.3.0</Text>
     </View>
   );
 };

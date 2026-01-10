@@ -13,6 +13,7 @@ import {
   Alert,
   Linking,
 } from 'react-native';
+import useTranslation from '../hooks/useTranslation';
 
 /**
  * Settings Menu Component
@@ -31,15 +32,16 @@ const SettingsMenu = ({
   onResetBestScore,
 }) => {
   const [showCredits, setShowCredits] = useState(false);
+  const { t, locale, changeLanguage, languages } = useTranslation();
 
   const handleResetPress = () => {
     Alert.alert(
-      'Recommencer à zéro',
-      'Es-tu sûr de vouloir réinitialiser toute ta progression ? Cette action est irréversible.',
+      t('settings.resetProgressTitle'),
+      t('settings.confirmResetProgress'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Confirmer',
+          text: t('common.confirm'),
           style: 'destructive',
           onPress: () => {
             onResetProgress();
@@ -52,12 +54,12 @@ const SettingsMenu = ({
 
   const handleResetBestScore = () => {
     Alert.alert(
-      'Réinitialiser le meilleur score',
-      'Es-tu sûr de vouloir remettre ton meilleur score à zéro ?',
+      t('settings.resetBestScoreTitle'),
+      t('settings.confirmResetBestScore'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Confirmer',
+          text: t('common.confirm'),
           style: 'destructive',
           onPress: () => {
             onResetBestScore?.();
@@ -79,13 +81,13 @@ const SettingsMenu = ({
         <View style={styles.overlay}>
           <View style={styles.creditsContainer}>
             <Text style={styles.creditsText}>
-              App construite avec ❤️ par{'\n'}Guillaume HARARI{'\n'}(vibe codé 😉)
+              {t('settings.creditsText')}
             </Text>
             <TouchableOpacity
               style={styles.backButton}
               onPress={() => setShowCredits(false)}
             >
-              <Text style={styles.backButtonText}>← Retour</Text>
+              <Text style={styles.backButtonText}>{t('common.back')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -102,13 +104,32 @@ const SettingsMenu = ({
     >
       <View style={styles.overlay}>
         <View style={styles.menuContainer}>
-          <Text style={styles.title}>Paramètres</Text>
+          <Text style={styles.title}>{t('settings.title')}</Text>
+
+          {/* Language Selector */}
+          <View style={styles.menuItem}>
+            <Text style={styles.menuItemText}>🌐</Text>
+            <View style={styles.languageSelector}>
+              {languages.map((lang) => (
+                <TouchableOpacity
+                  key={lang.code}
+                  style={[
+                    styles.languageButton,
+                    locale === lang.code && styles.languageButtonActive,
+                  ]}
+                  onPress={() => changeLanguage(lang.code)}
+                >
+                  <Text style={styles.languageFlag}>{lang.flag}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
 
           {/* Sound Toggle */}
           <TouchableOpacity style={styles.menuItem} onPress={onToggleSound}>
-            <Text style={styles.menuItemText}>Son</Text>
+            <Text style={styles.menuItemText}>{t('settings.sound')}</Text>
             <View style={[styles.toggle, soundEnabled && styles.toggleOn]}>
-              <Text style={styles.toggleText}>{soundEnabled ? 'ON' : 'OFF'}</Text>
+              <Text style={styles.toggleText}>{soundEnabled ? t('common.on') : t('common.off')}</Text>
             </View>
           </TouchableOpacity>
 
@@ -117,7 +138,7 @@ const SettingsMenu = ({
             style={styles.menuItem}
             onPress={() => Linking.openURL('https://guillaumebdx.github.io/regles-edgy/')}
           >
-            <Text style={styles.menuItemText}>Règles du jeu</Text>
+            <Text style={styles.menuItemText}>{t('settings.rules')}</Text>
             <Text style={styles.menuItemArrow}>→</Text>
           </TouchableOpacity>
 
@@ -126,32 +147,32 @@ const SettingsMenu = ({
             style={styles.menuItem}
             onPress={() => setShowCredits(true)}
           >
-            <Text style={styles.menuItemText}>Crédits</Text>
+            <Text style={styles.menuItemText}>{t('settings.credits')}</Text>
             <Text style={styles.menuItemArrow}>→</Text>
           </TouchableOpacity>
 
           {/* Reset Best Score */}
           <TouchableOpacity style={styles.menuItem} onPress={handleResetBestScore}>
             <Text style={[styles.menuItemText, styles.warningText]}>
-              Réinitialiser meilleur score
+              {t('settings.resetBestScore')}
             </Text>
           </TouchableOpacity>
 
           {/* Reset Progress */}
           <TouchableOpacity style={styles.menuItem} onPress={handleResetPress}>
             <Text style={[styles.menuItemText, styles.dangerText]}>
-              Recommencer à zéro
+              {t('settings.resetProgress')}
             </Text>
           </TouchableOpacity>
 
           {/* Version */}
           <View style={styles.versionContainer}>
-            <Text style={styles.versionText}>Version 1.3.0</Text>
+            <Text style={styles.versionText}>{t('settings.version')} 1.4.0</Text>
           </View>
 
           {/* Close Button */}
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>Fermer</Text>
+            <Text style={styles.closeButtonText}>{t('common.close')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -204,6 +225,25 @@ const styles = StyleSheet.create({
   },
   warningText: {
     color: '#f39c12',
+  },
+  languageSelector: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  languageButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(100, 100, 100, 0.3)',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  languageButtonActive: {
+    backgroundColor: 'rgba(100, 160, 180, 0.3)',
+    borderColor: 'rgba(100, 160, 180, 0.6)',
+  },
+  languageFlag: {
+    fontSize: 24,
   },
   toggle: {
     backgroundColor: 'rgba(100, 100, 100, 0.4)',

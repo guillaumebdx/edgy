@@ -24,6 +24,7 @@ import SettingsMenu from './SettingsMenu';
 import { loadSoundPreference, setSoundEnabled, isSoundEnabled } from '../sounds';
 import { loadHighScore, resetHighScore } from '../persistence';
 import { getLevelImage } from '../levelAssets';
+import useTranslation from '../hooks/useTranslation';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -56,6 +57,7 @@ const StarsDisplay = ({ stars, isLocked }) => {
  */
 const LevelNode = ({ 
   level, 
+  levelName,
   isCompleted, 
   isCurrent, 
   isLocked, 
@@ -127,7 +129,7 @@ const LevelNode = ({
           styles.levelName,
           isLocked && styles.textLocked,
         ]} numberOfLines={1}>
-          {level.name}
+          {levelName}
         </Text>
         <Text style={[
           styles.levelTarget,
@@ -233,6 +235,8 @@ const CareerMap = ({
   onDebugSetLevel,
   onFreeMode,
 }) => {
+  const { t, getLevelName } = useTranslation();
+  
   // Settings menu state
   const [showSettings, setShowSettings] = useState(false);
   const [soundEnabled, setSoundEnabledState] = useState(true);
@@ -348,7 +352,7 @@ const CareerMap = ({
         <TouchableOpacity onPress={handleTitleTap} activeOpacity={0.8}>
           <Text style={styles.title}>EDGY</Text>
         </TouchableOpacity>
-        <Text style={styles.subtitle}>CIRCUIT</Text>
+        <Text style={styles.subtitle}>{t('careerMap.circuit')}</Text>
       </View>
 
       {/* Settings Menu */}
@@ -365,7 +369,7 @@ const CareerMap = ({
       {showDebugMenu && (
         <View style={styles.debugOverlay}>
           <View style={styles.debugMenu}>
-            <Text style={styles.debugTitle}>🛠️ Debug - Aller au niveau</Text>
+            <Text style={styles.debugTitle}>{t('careerMap.debugTitle')}</Text>
             <ScrollView style={styles.debugScroll}>
               {CAREER_LEVELS.map((level) => (
                 <TouchableOpacity
@@ -374,7 +378,7 @@ const CareerMap = ({
                   onPress={() => handleDebugSelectLevel(level.id)}
                 >
                   <Text style={styles.debugLevelText}>
-                    Niveau {level.id} - {level.name}
+                    {t('common.level')} {level.id} - {t(`levels.${level.id}`)}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -383,7 +387,7 @@ const CareerMap = ({
               style={styles.debugCloseButton}
               onPress={() => setShowDebugMenu(false)}
             >
-              <Text style={styles.debugCloseText}>Annuler</Text>
+              <Text style={styles.debugCloseText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -403,12 +407,12 @@ const CareerMap = ({
         >
           <View style={styles.freeModeGlow} />
           <View style={styles.freeModeCardContent}>
-            <Text style={styles.freeModeCardTitle}>MODE LIBRE</Text>
-            <Text style={styles.freeModeCardSubtitle}>Jouez sans limite • Battez votre record</Text>
+            <Text style={styles.freeModeCardTitle}>{t('careerMap.freeMode')}</Text>
+            <Text style={styles.freeModeCardSubtitle}>{t('careerMap.freeModeSubtitle')}</Text>
             {freeHighScore > 0 && (
               <View style={styles.freeModeHighScoreRow}>
-                <Text style={styles.freeModeHighScoreLabel}>Meilleur score :</Text>
-                <Text style={styles.freeModeCardHighScore}>{freeHighScore.toLocaleString('fr-FR')}</Text>
+                <Text style={styles.freeModeHighScoreLabel}>{t('careerMap.bestScore')}</Text>
+                <Text style={styles.freeModeCardHighScore}>{freeHighScore.toLocaleString()}</Text>
               </View>
             )}
           </View>
@@ -431,6 +435,7 @@ const CareerMap = ({
                 {/* Level node */}
                 <LevelNode
                   level={level}
+                  levelName={getLevelName(level.id)}
                   isCompleted={isCompleted}
                   isCurrent={isCurrent}
                   isLocked={isLocked}

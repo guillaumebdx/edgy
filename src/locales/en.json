@@ -1,0 +1,101 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "back": "← Back",
+    "points": "points",
+    "pts": "pts",
+    "level": "Level",
+    "score": "SCORE",
+    "stock": "STOCK",
+    "max": "MAX",
+    "on": "ON",
+    "off": "OFF"
+  },
+  "menu": {
+    "continue": "Continue",
+    "newGame": "New Game"
+  },
+  "settings": {
+    "title": "Settings",
+    "sound": "Sound",
+    "rules": "Game Rules",
+    "credits": "Credits",
+    "resetBestScore": "Reset Best Score",
+    "resetProgress": "Start Over",
+    "version": "Version",
+    "creditsText": "App built with ❤️ by\nGuillaume HARARI\n(vibe coded 😉)",
+    "confirmResetProgress": "Are you sure you want to reset all your progress? This action cannot be undone.",
+    "confirmResetBestScore": "Are you sure you want to reset your best score?",
+    "resetProgressTitle": "Start Over",
+    "resetBestScoreTitle": "Reset Best Score"
+  },
+  "careerMap": {
+    "circuit": "CIRCUIT",
+    "freeMode": "FREE MODE",
+    "freeModeSubtitle": "Play without limits • Beat your record",
+    "bestScore": "Best score:",
+    "debugTitle": "🛠️ Debug - Go to level"
+  },
+  "levelInfo": {
+    "scoreVsRecord": "SCORE vs RECORD"
+  },
+  "gameOver": {
+    "gameOver": "Game Over",
+    "careerComplete": "Career Complete!",
+    "levelComplete": "Level Complete!",
+    "objective": "Objective:",
+    "nextLevel": "Next Level",
+    "replay": "Replay",
+    "retry": "Retry",
+    "newRecord": "New Record!"
+  },
+  "tutorial": {
+    "step1": "Connect 2 identical cells",
+    "step2": "2 cells = value 2!",
+    "step3": "3 cells = value 3",
+    "step4": "Exceed MAX to destroy!",
+    "step5": "Reach the goal to win!"
+  },
+  "powerUps": {
+    "shortCircuitHint": "Tap a cell to destroy",
+    "reprogramHint": "Tap a cell to change it to",
+    "reprogramTitle": "Reprogram",
+    "reprogramSubtitle": "Choose the new value"
+  },
+  "challenges": {
+    "columnOfFives": "Align a full column of 5s",
+    "rowOfFives": "Align a full row of 5s"
+  },
+  "celebrations": {
+    "perfect": "PERFECT!",
+    "incredible": "INCREDIBLE!",
+    "wellPlayed": "WELL PLAYED!",
+    "superb": "SUPERB!",
+    "magnificent": "MAGNIFICENT!",
+    "excellent": "EXCELLENT!"
+  },
+  "levels": {
+    "0": "Tutorial",
+    "1": "Initiation",
+    "2": "Simple Circuits",
+    "3": "Advanced Logic",
+    "4": "High Voltage",
+    "5": "Circuit Master",
+    "6": "Perfect Column",
+    "7": "Strong Signal",
+    "8": "Magnetic Pull",
+    "9": "Relaxing Coil",
+    "10": "Integrated Circuit",
+    "11": "Mini Concept",
+    "12": "Capacitor",
+    "13": "Double Screw",
+    "14": "Soldering Iron",
+    "15": "Fuse",
+    "16": "Brutal Discharge",
+    "17": "Mini Stock",
+    "18": "Ultimate Score",
+    "19": "Microchip"
+  }
+}

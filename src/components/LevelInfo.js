@@ -6,6 +6,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { getLevelImage } from '../levelAssets';
+import useTranslation from '../hooks/useTranslation';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -31,6 +32,8 @@ const LevelInfo = ({
   levelId = null,
   isFreeMode = false,
 }) => {
+  const { t } = useTranslation();
+  
   // Get level component image
   const levelImage = levelId !== null ? getLevelImage(levelId) : null;
   
@@ -131,7 +134,7 @@ const LevelInfo = ({
           {isFreeMode ? (
             <View style={[styles.gaugeContainer, styles.gaugeContainerScore]}>
               <View style={styles.gaugeHeader}>
-                <Text style={styles.gaugeLabel}>SCORE vs RECORD</Text>
+                <Text style={styles.gaugeLabel}>{t('levelInfo.scoreVsRecord')}</Text>
                 <Text style={[
                   styles.gaugeValue,
                   currentScore > highScore && highScore > 0 && styles.gaugeValueComplete,
@@ -154,7 +157,7 @@ const LevelInfo = ({
               isTutorialLastStep && blinkStyle,
             ]}>
               <View style={styles.gaugeHeader}>
-                <Text style={styles.gaugeLabel}>SCORE</Text>
+                <Text style={styles.gaugeLabel}>{t('common.score')}</Text>
                 <Animated.Text style={[
                   styles.gaugeValue,
                   scoreProgress >= 1 && styles.gaugeValueComplete,
@@ -175,7 +178,7 @@ const LevelInfo = ({
           ) : (
             <View style={[styles.gaugeContainer, styles.gaugeContainerScore]}>
               <View style={styles.gaugeHeader}>
-                <Text style={styles.gaugeLabel}>SCORE</Text>
+                <Text style={styles.gaugeLabel}>{t('common.score')}</Text>
                 <Text style={styles.gaugeValue}>{currentScore.toLocaleString('fr-FR')}</Text>
               </View>
               <View style={styles.gaugeTrack}>
@@ -187,7 +190,7 @@ const LevelInfo = ({
           {/* Stock gauge */}
           <View style={styles.gaugeContainer}>
             <View style={styles.gaugeHeader}>
-              <Text style={styles.gaugeLabel}>STOCK</Text>
+              <Text style={styles.gaugeLabel}>{t('common.stock')}</Text>
               <Text style={[styles.gaugeValue, { color: getStockColor() }]}>
                 {currentStock}
               </Text>
@@ -211,7 +214,7 @@ const LevelInfo = ({
               styles.challengeText,
               challengeCompleted && styles.challengeCompleted
             ]}>
-              {challengeCompleted ? '⭐' : '☆'} {challenge.description}
+              {challengeCompleted ? '⭐' : '☆'} {challenge.type === 'column_of_fives' ? t('challenges.columnOfFives') : t('challenges.rowOfFives')}
             </Text>
           </View>
         )}

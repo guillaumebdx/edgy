@@ -1,0 +1,101 @@
+{
+  "common": {
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "close": "Fermer",
+    "back": "← Retour",
+    "points": "points",
+    "pts": "pts",
+    "level": "Niveau",
+    "score": "SCORE",
+    "stock": "STOCK",
+    "max": "MAX",
+    "on": "ON",
+    "off": "OFF"
+  },
+  "menu": {
+    "continue": "Continuer",
+    "newGame": "Nouvelle partie"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "sound": "Son",
+    "rules": "Règles du jeu",
+    "credits": "Crédits",
+    "resetBestScore": "Réinitialiser meilleur score",
+    "resetProgress": "Recommencer à zéro",
+    "version": "Version",
+    "creditsText": "App construite avec ❤️ par\nGuillaume HARARI\n(vibe codé 😉)",
+    "confirmResetProgress": "Es-tu sûr de vouloir réinitialiser toute ta progression ? Cette action est irréversible.",
+    "confirmResetBestScore": "Es-tu sûr de vouloir remettre ton meilleur score à zéro ?",
+    "resetProgressTitle": "Recommencer à zéro",
+    "resetBestScoreTitle": "Réinitialiser le meilleur score"
+  },
+  "careerMap": {
+    "circuit": "CIRCUIT",
+    "freeMode": "MODE LIBRE",
+    "freeModeSubtitle": "Jouez sans limite • Battez votre record",
+    "bestScore": "Meilleur score :",
+    "debugTitle": "🛠️ Debug - Aller au niveau"
+  },
+  "levelInfo": {
+    "scoreVsRecord": "SCORE vs RECORD"
+  },
+  "gameOver": {
+    "gameOver": "Partie terminée",
+    "careerComplete": "Carrière terminée !",
+    "levelComplete": "Niveau réussi !",
+    "objective": "Objectif :",
+    "nextLevel": "Niveau suivant",
+    "replay": "Rejouer",
+    "retry": "Réessayer",
+    "newRecord": "Nouveau Record !"
+  },
+  "tutorial": {
+    "step1": "Relie 2 cases identiques",
+    "step2": "2 cases = valeur 2 !",
+    "step3": "3 cases = valeur 3",
+    "step4": "Dépasse MAX pour détruire !",
+    "step5": "Atteins l'objectif pour gagner !"
+  },
+  "powerUps": {
+    "shortCircuitHint": "Touchez une case à détruire",
+    "reprogramHint": "Touchez une case pour la changer en",
+    "reprogramTitle": "Reprogrammation",
+    "reprogramSubtitle": "Choisissez la nouvelle valeur"
+  },
+  "challenges": {
+    "columnOfFives": "Aligner une colonne complète de 5",
+    "rowOfFives": "Aligner une ligne complète de 5"
+  },
+  "celebrations": {
+    "perfect": "PARFAIT !",
+    "incredible": "INCROYABLE !",
+    "wellPlayed": "BIEN JOUÉ !",
+    "superb": "SUPERBE !",
+    "magnificent": "MAGNIFIQUE !",
+    "excellent": "EXCELLENT !"
+  },
+  "levels": {
+    "0": "Tutoriel",
+    "1": "Initiation",
+    "2": "Circuits simples",
+    "3": "Logique avancée",
+    "4": "Haute tension",
+    "5": "Maître du circuit",
+    "6": "Colonne parfaite",
+    "7": "Signal fort",
+    "8": "Attraction magnétique",
+    "9": "Bobine relaxante",
+    "10": "Circuit intégré",
+    "11": "Mini concept",
+    "12": "Condensateur",
+    "13": "Double vis",
+    "14": "Fer à souder",
+    "15": "Fusible",
+    "16": "Décharge brutale",
+    "17": "Mini Stock",
+    "18": "Score ultime",
+    "19": "Micro-puce"
+  }
+}
