@@ -109,16 +109,49 @@ npx expo start
 
 ```
 edgy-grid/
-├── App.js                    # Point d'entrée
-├── assets/                   # Images, sons, logo
+├── App.js                    # Point d'entrée principal
+├── app.json                  # Configuration Expo
+├── assets/                   # Images, sons, icônes
+│   ├── logo.png
+│   ├── background-*.png
+│   ├── glitch.png
+│   └── sounds/
 └── src/
-    ├── components/           # UI (AnimatedCell, CareerMap, SettingsMenu...)
-    ├── hooks/                # useGameState, useCareerState, useTutorialState...
-    ├── persistence/          # SQLite storage
-    ├── constants.js          # Config (couleurs, animations)
-    ├── gameLogic.js          # Règles du jeu
-    ├── careerLevels.js       # Définition des niveaux
-    └── sounds.js             # Gestion audio
+    ├── components/           # Composants UI
+    │   ├── AnimatedCell.js       # Cellule avec animations
+    │   ├── CareerMap.js          # Carte de progression
+    │   ├── CelebrationText.js    # Animations de célébration
+    │   ├── FloatingText.js       # Texte flottant (scores)
+    │   ├── GameOverScreen.js     # Écran de fin de partie
+    │   ├── LevelInfo.js          # Informations du niveau
+    │   ├── MainMenu.js           # Menu principal
+    │   ├── PathCounter.js        # Compteur de chemin
+    │   ├── SettingsMenu.js       # Menu paramètres
+    │   ├── StockPreview.js       # Aperçu des cellules
+    │   └── TutorialOverlay.js    # Overlay du tutoriel
+    ├── hooks/                # Hooks React personnalisés
+    │   ├── useCareerState.js     # État de la carrière
+    │   ├── useGameState.js       # État du jeu principal
+    │   ├── useLevelEntryAnimation.js  # Animation d'entrée
+    │   ├── useTranslation.js     # Traductions i18n
+    │   └── useTutorialState.js   # État du tutoriel
+    ├── locales/              # Fichiers de traduction
+    │   ├── fr.json               # Français
+    │   ├── en.json               # Anglais
+    │   ├── de.json               # Allemand
+    │   ├── es.json               # Espagnol
+    │   ├── it.json               # Italien
+    │   └── pt.json               # Portugais
+    ├── persistence/          # Stockage SQLite
+    │   └── careerStorage.js      # Sauvegarde progression
+    ├── careerLevels.js       # Définition des 20 niveaux
+    ├── constants.js          # Constantes (couleurs, animations, valeurs)
+    ├── gameLogic.js          # Logique du jeu (fusion, gravité, chemins)
+    ├── levelAssets.js        # Mapping des images de niveaux
+    ├── scoreManager.js       # Gestion des scores et combos
+    ├── sounds.js             # Gestion audio
+    ├── styles.js             # Styles globaux
+    └── utils.js              # Fonctions utilitaires
 ```
 
 ---
