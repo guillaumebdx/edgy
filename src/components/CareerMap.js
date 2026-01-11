@@ -236,6 +236,7 @@ const CareerMap = ({
   onNewGame,
   onDebugSetLevel,
   onFreeMode,
+  onGiveFeedback,
 }) => {
   const { t, getLevelName } = useTranslation();
   
@@ -386,6 +387,7 @@ const CareerMap = ({
         onToggleSound={handleToggleSound}
         onResetProgress={onNewGame}
         onResetBestScore={handleResetBestScore}
+        onGiveFeedback={onGiveFeedback}
       />
 
       {/* Debug Menu Modal */}

@@ -23,6 +23,7 @@
     "sound": "Sound",
     "rules": "Game Rules",
     "credits": "Credits",
+    "giveFeedback": "Give Feedback",
     "resetBestScore": "Reset Best Score",
     "resetProgress": "Start Over",
     "version": "Version",
@@ -101,5 +102,12 @@
     "18": "Ultimate Score",
     "19": "Microchip",
     "20": "Interference"
+  },
+  "rating": {
+    "title": "Enjoying EDGY?",
+    "message": "Looks like you're starting to master Edgy.\nYour review would make a difference.",
+    "rate": "Rate the app",
+    "later": "Later",
+    "refuse": "No thanks"
   }
 }

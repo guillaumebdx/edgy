@@ -23,6 +23,7 @@
     "sound": "Ton",
     "rules": "Spielregeln",
     "credits": "Credits",
+    "giveFeedback": "Bewertung abgeben",
     "resetBestScore": "Highscore zurücksetzen",
     "resetProgress": "Von vorne beginnen",
     "version": "Version",
@@ -101,5 +102,12 @@
     "18": "Ultimativer Score",
     "19": "Mikrochip",
     "20": "Interferenz"
+  },
+  "rating": {
+    "title": "Gefällt dir EDGY?",
+    "message": "Es sieht so aus, als würdest du Edgy meistern.\nDeine Bewertung würde einen Unterschied machen.",
+    "rate": "App bewerten",
+    "later": "Später",
+    "refuse": "Nein danke"
   }
 }

@@ -23,6 +23,7 @@
     "sound": "Son",
     "rules": "Règles du jeu",
     "credits": "Crédits",
+    "giveFeedback": "Donner un avis",
     "resetBestScore": "Réinitialiser meilleur score",
     "resetProgress": "Recommencer à zéro",
     "version": "Version",
@@ -101,5 +102,12 @@
     "18": "Score ultime",
     "19": "Micro-puce",
     "20": "Interférences"
+  },
+  "rating": {
+    "title": "Vous aimez EDGY ?",
+    "message": "On dirait que vous commencez à maîtriser Edgy.\nVotre avis ferait la différence.",
+    "rate": "Noter l'application",
+    "later": "Plus tard",
+    "refuse": "Non merci"
   }
 }

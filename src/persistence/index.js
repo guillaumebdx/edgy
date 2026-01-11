@@ -15,4 +15,6 @@ export {
   loadHighScore,
   saveHighScore,
   resetHighScore,
+  loadRatingStatus,
+  saveRatingStatus,
 } from './careerStorage';

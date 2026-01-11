@@ -17,48 +17,69 @@ const STARS_TABLE = 'level_stars';
 const HIGH_SCORES_TABLE = 'high_scores';
 
 let db = null;
+let initializationPromise = null;
 
 /**
  * Initialize the database and create tables if needed
  * @returns {Promise<void>}
  */
 export const initDatabase = async () => {
-  try {
-    db = await SQLite.openDatabaseAsync(DATABASE_NAME);
-    
-    // Create career_progress table if it doesn't exist
-    // Extensible structure: key-value pairs for flexibility
-    await db.execAsync(`
-      CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
-        key TEXT PRIMARY KEY NOT NULL,
-        value TEXT NOT NULL,
-        updated_at INTEGER DEFAULT (strftime('%s', 'now'))
-      );
-    `);
-    
-    // Create level_stars table for star system
-    await db.execAsync(`
-      CREATE TABLE IF NOT EXISTS ${STARS_TABLE} (
-        level_id INTEGER PRIMARY KEY NOT NULL,
-        stars INTEGER NOT NULL DEFAULT 0,
-        updated_at INTEGER DEFAULT (strftime('%s', 'now'))
-      );
-    `);
-    
-    // Create high_scores table for free mode
-    await db.execAsync(`
-      CREATE TABLE IF NOT EXISTS ${HIGH_SCORES_TABLE} (
-        mode TEXT PRIMARY KEY NOT NULL,
-        score INTEGER NOT NULL DEFAULT 0,
-        updated_at INTEGER DEFAULT (strftime('%s', 'now'))
-      );
-    `);
-    
-    return true;
-  } catch (error) {
-    console.error('Failed to initialize database:', error);
-    return false;
+  // Return existing db if already initialized
+  if (db) return true;
+  
+  // If initialization is in progress, wait for it
+  if (initializationPromise) {
+    await initializationPromise;
+    return db !== null;
   }
+  
+  // Start initialization
+  initializationPromise = (async () => {
+    try {
+      const database = await SQLite.openDatabaseAsync(DATABASE_NAME);
+      
+      // Create career_progress table if it doesn't exist
+      // Extensible structure: key-value pairs for flexibility
+      await database.execAsync(`
+        CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
+          key TEXT PRIMARY KEY NOT NULL,
+          value TEXT NOT NULL,
+          updated_at INTEGER DEFAULT (strftime('%s', 'now'))
+        );
+      `);
+      
+      // Create level_stars table for star system
+      await database.execAsync(`
+        CREATE TABLE IF NOT EXISTS ${STARS_TABLE} (
+          level_id INTEGER PRIMARY KEY NOT NULL,
+          stars INTEGER NOT NULL DEFAULT 0,
+          updated_at INTEGER DEFAULT (strftime('%s', 'now'))
+        );
+      `);
+      
+      // Create high_scores table for free mode
+      await database.execAsync(`
+        CREATE TABLE IF NOT EXISTS ${HIGH_SCORES_TABLE} (
+          mode TEXT PRIMARY KEY NOT NULL,
+          score INTEGER NOT NULL DEFAULT 0,
+          updated_at INTEGER DEFAULT (strftime('%s', 'now'))
+        );
+      `);
+      
+      // Only assign to db after all tables are created successfully
+      db = database;
+      return true;
+    } catch (error) {
+      console.error('Failed to initialize database:', error);
+      db = null;
+      return false;
+    } finally {
+      initializationPromise = null;
+    }
+  })();
+  
+  const result = await initializationPromise;
+  return result;
 };
 
 /**
@@ -66,12 +87,12 @@ export const initDatabase = async () => {
  * @returns {Promise<{currentLevel: number, unlockedLevel: number} | null>}
  */
 export const loadCareerProgress = async () => {
-  if (!db) {
-    const initialized = await initDatabase();
-    if (!initialized) return null;
-  }
-  
   try {
+    if (!db) {
+      const initialized = await initDatabase();
+      if (!initialized || !db) return null;
+    }
+    
     const rows = await db.getAllAsync(
       `SELECT key, value FROM ${TABLE_NAME} WHERE key IN ('currentLevel', 'unlockedLevel')`
     );
@@ -108,12 +129,12 @@ export const loadCareerProgress = async () => {
  * @returns {Promise<boolean>}
  */
 export const saveCareerProgress = async (currentLevel, unlockedLevel) => {
-  if (!db) {
-    const initialized = await initDatabase();
-    if (!initialized) return false;
-  }
-  
   try {
+    if (!db) {
+      const initialized = await initDatabase();
+      if (!initialized || !db) return false;
+    }
+    
     const timestamp = Math.floor(Date.now() / 1000);
     
     // Upsert current level
@@ -142,12 +163,12 @@ export const saveCareerProgress = async (currentLevel, unlockedLevel) => {
  * @returns {Promise<boolean>}
  */
 export const resetCareerProgress = async () => {
-  if (!db) {
-    const initialized = await initDatabase();
-    if (!initialized) return false;
-  }
-  
   try {
+    if (!db) {
+      const initialized = await initDatabase();
+      if (!initialized || !db) return false;
+    }
+    
     await db.runAsync(`DELETE FROM ${TABLE_NAME}`);
     return true;
   } catch (error) {
@@ -173,12 +194,12 @@ export const hasSavedProgress = async () => {
  * @returns {Promise<boolean>}
  */
 export const saveLevelStars = async (levelId, stars) => {
-  if (!db) {
-    const initialized = await initDatabase();
-    if (!initialized) return false;
-  }
-  
   try {
+    if (!db) {
+      const initialized = await initDatabase();
+      if (!initialized || !db) return false;
+    }
+    
     const timestamp = Math.floor(Date.now() / 1000);
     
     // Only update if new stars count is higher (stars are permanent)
@@ -203,12 +224,12 @@ export const saveLevelStars = async (levelId, stars) => {
  * @returns {Promise<number>} Number of stars (0 if none)
  */
 export const loadLevelStars = async (levelId) => {
-  if (!db) {
-    const initialized = await initDatabase();
-    if (!initialized) return 0;
-  }
-  
   try {
+    if (!db) {
+      const initialized = await initDatabase();
+      if (!initialized || !db) return 0;
+    }
+    
     const row = await db.getFirstAsync(
       `SELECT stars FROM ${STARS_TABLE} WHERE level_id = ?`,
       [levelId]
@@ -226,12 +247,12 @@ export const loadLevelStars = async (levelId) => {
  * @returns {Promise<Object>} Map of levelId -> stars
  */
 export const loadAllStars = async () => {
-  if (!db) {
-    const initialized = await initDatabase();
-    if (!initialized) return {};
-  }
-  
   try {
+    if (!db) {
+      const initialized = await initDatabase();
+      if (!initialized || !db) return {};
+    }
+    
     const rows = await db.getAllAsync(`SELECT level_id, stars FROM ${STARS_TABLE}`);
     
     const starsMap = {};
@@ -324,6 +345,55 @@ export const saveHighScore = async (score, mode = 'free_mode') => {
     return currentHighScore === score;
   } catch (error) {
     console.error('Failed to save high score:', error);
+    return false;
+  }
+};
+
+/**
+ * Load rating prompt status from database
+ * @returns {Promise<string|null>} 'rated', 'later', 'refused', or null if not set
+ */
+export const loadRatingStatus = async () => {
+  try {
+    if (!db) {
+      const initialized = await initDatabase();
+      if (!initialized || !db) return null;
+    }
+    
+    const row = await db.getFirstAsync(
+      `SELECT value FROM ${TABLE_NAME} WHERE key = 'rating_status'`
+    );
+    
+    return row ? row.value : null;
+  } catch (error) {
+    console.error('Failed to load rating status:', error);
+    return null;
+  }
+};
+
+/**
+ * Save rating prompt status to database
+ * @param {string} status - 'rated', 'later', or 'refused'
+ * @returns {Promise<boolean>}
+ */
+export const saveRatingStatus = async (status) => {
+  try {
+    if (!db) {
+      const initialized = await initDatabase();
+      if (!initialized || !db) return false;
+    }
+    
+    const timestamp = Math.floor(Date.now() / 1000);
+    
+    await db.runAsync(
+      `INSERT INTO ${TABLE_NAME} (key, value, updated_at) VALUES ('rating_status', ?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+      [status, timestamp]
+    );
+    
+    return true;
+  } catch (error) {
+    console.error('Failed to save rating status:', error);
     return false;
   }
 };

@@ -45,7 +45,8 @@ import StockPreview from './src/components/StockPreview';
 import { getLevelConfig } from './src/careerLevels';
 import { useGameState, useCareerState, useTutorialState, useLevelEntryAnimation, useTranslation } from './src/hooks';
 import { initSounds, unloadSounds, startBackgroundMusic, stopBackgroundMusic, playLandingSound } from './src/sounds';
-import { saveHighScore, loadHighScore } from './src/persistence';
+import { saveHighScore, loadHighScore, loadRatingStatus } from './src/persistence';
+import RatingPrompt from './src/components/RatingPrompt';
 
 // App screens
 const SCREENS = {
@@ -99,6 +100,15 @@ export default function App() {
     }
   }, [currentScreen]);
 
+  // Load rating status on mount
+  useEffect(() => {
+    const loadRating = async () => {
+      const status = await loadRatingStatus();
+      setRatingStatus(status);
+    };
+    loadRating();
+  }, []);
+
   // Career state management
   const {
     careerLevelNumber,
@@ -123,6 +133,10 @@ export default function App() {
   // Free mode state
   const [isFreeModeActive, setIsFreeModeActive] = useState(false);
   const [freeHighScore, setFreeHighScore] = useState(0);
+  
+  // Rating prompt state
+  const [showRatingPrompt, setShowRatingPrompt] = useState(false);
+  const [ratingStatus, setRatingStatus] = useState(null); // null = not loaded, 'rated'/'later'/'refused' = already responded
 
   // Determine active level config (career level or free mode)
   const activeLevelConfig = isFreeModeActive ? FREE_MODE_CONFIG : playingLevel;
@@ -235,6 +249,15 @@ export default function App() {
   }));
 
   /**
+   * Handle rating prompt close - update status so it won't show again
+   */
+  const handleRatingPromptClose = useCallback(() => {
+    setShowRatingPrompt(false);
+    // Reload rating status to reflect the user's choice
+    loadRatingStatus().then(status => setRatingStatus(status));
+  }, []);
+
+  /**
    * Handle level selection from career map
    * @param {number} levelNumber - Selected level number
    */
@@ -319,6 +342,10 @@ export default function App() {
     // Wait for BOTH gameOver AND finalScore to be set (they are set together in checkGameEnd)
     if (gameOver && finalScore !== null && !levelResult && (currentScreen === SCREENS.GAME || currentScreen === SCREENS.FREE_MODE)) {
       const processGameOver = async () => {
+        // Check if we should show rating prompt (only if user hasn't responded yet)
+        const shouldShowRating = ratingStatus === null;
+        console.log('[Rating] ratingStatus:', ratingStatus, 'shouldShowRating:', shouldShowRating);
+        
         // Free mode: save high score and show result
         if (isFreeModeActive) {
           const isNewHighScore = await saveHighScore(finalScore, 'free_mode');
@@ -332,6 +359,11 @@ export default function App() {
             highScore: currentHighScore,
             message: isNewHighScore && finalScore > 0 ? t('gameOver.newRecord') : t('gameOver.gameOver'),
           });
+          
+          // Trigger rating prompt if score >= 30000 and user hasn't responded yet
+          if (shouldShowRating && finalScore >= 30000) {
+            setTimeout(() => setShowRatingPrompt(true), 1500);
+          }
           return;
         }
         
@@ -344,6 +376,11 @@ export default function App() {
           const result = await processRunEnd(finalScore, challengeCompleted);
           result.targetScore = targetScore;
           setLevelResult(result);
+          
+          // Trigger rating prompt if level 10 completed and user hasn't responded yet
+          if (shouldShowRating && playingLevel?.id === 10) {
+            setTimeout(() => setShowRatingPrompt(true), 1500);
+          }
         } else {
           // Game over without reaching target - failure
           setLevelResult({
@@ -357,7 +394,7 @@ export default function App() {
       };
       processGameOver();
     }
-  }, [gameOver, finalScore, levelResult, currentScreen, isFreeModeActive, challengeCompleted, processRunEnd, playingLevel]);
+  }, [gameOver, finalScore, levelResult, currentScreen, isFreeModeActive, challengeCompleted, processRunEnd, playingLevel, ratingStatus]);
 
   // Wrapped gesture handlers that block during entry animation
   const wrappedGestureBegin = useCallback((x, y) => {
@@ -405,6 +442,12 @@ export default function App() {
           onNewGame={handleNewGame}
           onDebugSetLevel={debugSetLevel}
           onFreeMode={handleFreeMode}
+          onGiveFeedback={() => setShowRatingPrompt(true)}
+        />
+        {/* Rating prompt modal (also available from settings) */}
+        <RatingPrompt
+          visible={showRatingPrompt}
+          onClose={handleRatingPromptClose}
         />
       </GestureHandlerRootView>
     );
@@ -714,6 +757,12 @@ export default function App() {
           onVictoryOverride={handleVictoryOverride}
         />
       )}
+      
+      {/* Rating prompt modal */}
+      <RatingPrompt
+        visible={showRatingPrompt}
+        onClose={handleRatingPromptClose}
+      />
       </ImageBackground>
     </GestureHandlerRootView>
   );

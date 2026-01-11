@@ -30,6 +30,7 @@ const SettingsMenu = ({
   onToggleSound,
   onResetProgress,
   onResetBestScore,
+  onGiveFeedback,
 }) => {
   const [showCredits, setShowCredits] = useState(false);
   const { t, locale, changeLanguage, languages } = useTranslation();
@@ -148,6 +149,20 @@ const SettingsMenu = ({
             <Text style={styles.menuItemArrow}>→</Text>
           </TouchableOpacity>
 
+          {/* Give Feedback */}
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => {
+              onClose();
+              onGiveFeedback?.();
+            }}
+          >
+            <Text style={[styles.menuItemText, styles.feedbackText]}>
+              {t('settings.giveFeedback')}
+            </Text>
+            <Text style={styles.menuItemArrow}>⭐</Text>
+          </TouchableOpacity>
+
           {/* Reset Best Score */}
           <TouchableOpacity style={styles.menuItem} onPress={handleResetBestScore}>
             <Text style={[styles.menuItemText, styles.warningText]}>
@@ -222,6 +237,9 @@ const styles = StyleSheet.create({
   },
   warningText: {
     color: '#f39c12',
+  },
+  feedbackText: {
+    color: '#00BFFF',
   },
   languageSelectorRow: {
     flexDirection: 'row',
