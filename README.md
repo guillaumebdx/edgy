@@ -6,6 +6,8 @@
 
 Reliez des cases identiques sur une grille de circuit électronique, fusionnez-les et déclenchez des destructions en chaîne pour maximiser votre score.
 
+📲 Télécharger sur l’App Store : https://apps.apple.com/us/app/edgy/id6757022073
+
 ---
 
 ## 🎮 Fonctionnalités
