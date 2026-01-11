@@ -28,6 +28,8 @@ import useTranslation from '../hooks/useTranslation';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+// Module-level variable to persist scroll position across component mounts
+let persistedScrollPosition = 0;
 
 /**
  * Stars display component
@@ -246,6 +248,13 @@ const CareerMap = ({
   
   // Free mode high score
   const [freeHighScore, setFreeHighScore] = useState(0);
+  
+  // Hidden debug feature - 5 taps on title
+  const [tapCount, setTapCount] = useState(0);
+  
+  // Scroll position persistence
+  const scrollViewRef = useRef(null);
+  const tapTimeoutRef = useRef(null);
 
   // Load sound preference on mount
   useEffect(() => {
@@ -266,6 +275,19 @@ const CareerMap = ({
       loadScore();
     }
   }, [isLoading]);
+  
+  // Restore scroll position when component mounts or becomes visible
+  useEffect(() => {
+    if (scrollViewRef.current && persistedScrollPosition > 0) {
+      // Small delay to ensure layout is complete
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({
+          y: persistedScrollPosition,
+          animated: false,
+        });
+      }, 100);
+    }
+  }, []);
 
   const handleToggleSound = async () => {
     const newValue = !soundEnabled;
@@ -277,10 +299,6 @@ const CareerMap = ({
     await resetHighScore('free_mode');
     setFreeHighScore(0);
   };
-
-  // Hidden debug feature - 5 taps on title
-  const [tapCount, setTapCount] = useState(0);
-  const tapTimeoutRef = useRef(null);
 
   const handleTitleTap = () => {
     // Clear previous timeout
@@ -331,6 +349,11 @@ const CareerMap = ({
 
   const handleLevelPress = (level) => {
     onSelectLevel(level.id);
+  };
+  
+  // Save scroll position as user scrolls
+  const handleScroll = (event) => {
+    persistedScrollPosition = event.nativeEvent.contentOffset.y;
   };
 
   return (
@@ -395,9 +418,12 @@ const CareerMap = ({
 
       {/* Scrollable map */}
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       >
         {/* Free Mode card at top - prominent and attractive */}
         <TouchableOpacity 
