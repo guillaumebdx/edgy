@@ -11,15 +11,18 @@ Reliez des cases identiques sur une grille de circuit électronique, fusionnez-l
 ## 🎮 Fonctionnalités
 
 - **Tutoriel interactif** — Apprenez les mécaniques pas à pas avec guide visuel
-- **8 niveaux** de difficulté progressive (4×4 → 7×7)
+- **20 niveaux** de difficulté progressive (4×4 → 7×7)
 - **Mode Libre** — Jouez sans limite pour battre votre high score
 - **Système d'étoiles** — Jusqu'à 3★ par niveau avec challenges
+- **Cellules Glitch** — Cases non-sélectionnables qui bloquent les chemins
+- **Power-ups** — Short Circuit (destruction) et Reprogram (modification)
 - **Animation d'entrée** — Les blocs tombent et s'illuminent à chaque niveau
 - **Carte de carrière** — Circuit imprimé avec composants électroniques
 - **Effets sonores** — Validation, erreur, chute + musique de fond
 - **Retour haptique** — Vibrations pour les actions importantes
 - **Menu paramètres** — Son, crédits, réinitialisation
 - **Sauvegarde automatique** — Progression persistante (SQLite)
+- **Multilingue** — Support FR, EN, DE, ES, IT, PT
 
 ---
 
@@ -123,3 +126,47 @@ edgy-grid/
 ## 📄 Licence
 
 MIT
+
+---
+
+## 📝 Changelog
+
+### Version 1.4.0 (10 janvier 2026)
+- **Nouveau type de cellule : Glitch** — Cases non-sélectionnables qui bloquent les chemins et tombent avec la gravité
+- **Niveau 20 "Interférences"** — Nouveau niveau avec 2 glitches, 1 short circuit et 1 reprogram
+- **Protection des glitches** — Impossible de modifier ou détruire les glitches avec reprogram/short circuit (feedback visuel de rejet)
+- **Persistance du scroll** — La position de défilement sur la carte des niveaux est conservée lors du retour au menu
+- **Traductions complètes** — Support multilingue pour le niveau 20 (français, anglais, allemand, espagnol, italien, portugais)
+- **Corrections de bugs** — Résolution d'erreurs liées à l'ordre des hooks React
+
+### Version 1.3.0 (9 janvier 2026)
+- **Internationalisation (i18n)** — Support complet de 6 langues : français, anglais, allemand, espagnol, italien, portugais
+- **Réinitialisation du high score** — Nouvelle option dans les paramètres pour réinitialiser le meilleur score en mode libre
+- **Améliorations UI** — Interface traduite dynamiquement selon la langue du système
+
+### Version 1.2.0 (4-5 janvier 2026)
+- **Power-up : Short Circuit** — Nouvelle capacité pour détruire une cellule spécifique
+- **Power-up : Reprogram** — Nouvelle capacité pour modifier la valeur d'une cellule
+- **Aperçu des prochaines cellules** — Visualisation de la ligne de preview en bas de la grille
+- **Règles détaillées** — Ajout d'un écran explicatif des règles du jeu
+- **Améliorations générales** — Optimisations et corrections de bugs
+
+### Version 1.1.0 (27-29 décembre 2025)
+- **Système de bonus** — +500 points pour chaque ligne/colonne complète de valeurs identiques
+- **Compteur de stock** — Affichage du nombre de cellules restantes
+- **Stabilité améliorée** — Corrections de bugs critiques et optimisations de performance
+- **Améliorations visuelles** — Animations et feedback utilisateur améliorés
+
+### Version 1.0.0 (24-26 décembre 2025)
+- **Mode Carrière** — 8 niveaux de difficulté progressive avec système d'étoiles
+- **Tutoriel interactif** — Guide pas à pas pour apprendre les mécaniques
+- **Carte de progression** — Interface de circuit imprimé avec composants électroniques
+- **Système de shuffle** — Mélange de la grille quand aucun coup n'est possible
+- **Effets sonores** — Sons pour validation, erreur, chute et musique de fond
+- **Retour haptique** — Vibrations pour les actions importantes
+- **Menu paramètres** — Gestion du son, crédits et réinitialisation
+- **Sauvegarde automatique** — Persistance de la progression avec SQLite
+- **Système de challenges** — Objectifs spéciaux pour certains niveaux (colonnes parfaites)
+- **Mode Libre** — Jeu sans limite avec high score
+- **Animations fluides** — Entrée de niveau, chute des cellules, célébrations
+- **Mécaniques de base** — Fusion de cellules, gravité, combos, scoring
